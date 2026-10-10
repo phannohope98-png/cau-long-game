@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Game cầu lông đánh đơn: vật lý cầu lông thật, luật BWF, 7 chỉ số nhân vật, bot nhiều cấp, mắt diều hâu tua lại khi cầu sát vạch.">
+<title>Cầu Lông Đỉnh Cao</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="sb">
+    <div class="row me"><span class="sw"></span><span class="nm" id="sbn0">Bạn</span><span class="srv" id="srv0"></span><span class="g" id="sbg0">0</span><span class="p" id="sbp0">0</span></div>
+    <div class="row op"><span class="sw"></span><span class="nm" id="sbn1">Bot</span><span class="srv" id="srv1"></span><span class="g" id="sbg1">0</span><span class="p" id="sbp1">0</span></div>
+  </div>
+  <button id="pauseBtn" aria-label="Tạm dừng">❚❚</button>
+  <div id="enWrap"><div id="enBar"></div><span>THỂ LỰC</span></div>
+  <div id="msg"></div>
+  <div id="sub"></div>
+  <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div><div id="joyHint">KÉO ĐỂ DI CHUYỂN<br><small>kéo ngang lúc đánh = hướng cầu</small></div></div>
+  <div id="btns">
+    <div id="zoneLbl"></div>
+    <button class="shot" data-i="0"><i></i><b></b></button>
+    <button class="shot" data-i="1"><i></i><b></b></button>
+    <button class="shot" data-i="2"><i></i><b></b></button>
+  </div>
+</div>
+
+<div id="screens"></div>
+
+<script src="js/core.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/shots.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/match.js"></script>
+<script src="js/anim.js"></script>
+<script src="js/render.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
