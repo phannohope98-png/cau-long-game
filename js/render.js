@@ -43,17 +43,21 @@
   // Khung nhìn chính: cả nửa sân mình + một phần sân đối thủ
   const MAIN_POS = [0, -12.6, 7.0], MAIN_TGT = [0, -0.4, 0];
   function fitMain() {
+    const n = fitFor(2.6, 1.8), d = fitFor(6.9, 2.9);
+    cam.fitN = n; cam.fitD = d;
+    cam.baseCx = n.cx; cam.baseCy = n.cy; cam.baseFocal = n.focal;
+  }
+  // khung vừa khít: cả nửa sân mình + sân đối thủ tới độ sâu farY (người đứng cao farZ)
+  function fitFor(farY, farZ) {
     setCam(MAIN_POS, MAIN_TGT);
     cam.focal = 1; cam.cx = 0; cam.cy = 0;
-    const pts = [[-3.4, -7.3, 0], [3.4, -7.3, 0], [-3.1, 2.6, 0], [3.1, 2.6, 0], [0, 0, 1.55], [0, 3.2, 1.8]];
+    const pts = [[-3.4, -7.3, 0], [3.4, -7.3, 0], [-3.1, farY, 0], [3.1, farY, 0], [0, 0, 1.55], [0, farY + 0.6, farZ]];
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (const p of pts) { const q = proj(p); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
     const portrait = H > W;
     const fw = (W * (portrait ? 1.12 : 0.98)) / (x1 - x0), fh = (H * (portrait ? 0.7 : 0.9)) / (y1 - y0);
-    cam.focal = Math.min(fw, fh);
-    cam.cx = W / 2 - ((x0 + x1) / 2) * cam.focal;
-    cam.cy = (portrait ? H * 0.45 : H * 0.53) - ((y0 + y1) / 2) * cam.focal;
-    cam.baseCx = cam.cx; cam.baseCy = cam.cy; cam.baseFocal = cam.focal;
+    const focal = Math.min(fw, fh);
+    return { focal, cx: W / 2 - ((x0 + x1) / 2) * focal, cy: (portrait ? H * 0.45 : H * 0.53) - ((y0 + y1) / 2) * focal };
   }
 
   // ---------- vẽ cơ bản ----------
@@ -452,9 +456,10 @@
     const me = m.players[0], op = m.players[1], sh = m.shuttle;
     camX += (BL.clamp(me.x * 0.35 + (sh.inPlay ? sh.x * 0.15 : 0), -1.1, 1.1) - camX) * Math.min(1, dt * 3);
     const deep = Math.max(sh.inPlay && sh.y > 0 ? sh.y : 0, op.y);
-    camTY += (BL.clamp((deep - 3.0) * 0.45, 0, 1.6) - camTY) * Math.min(1, dt * 2.5);
-    setCam([MAIN_POS[0] + camX, MAIN_POS[1] + camTY * 0.5, MAIN_POS[2]], [MAIN_TGT[0] + camX * 0.8, MAIN_TGT[1] + camTY, MAIN_TGT[2]]);
-    cam.focal = cam.baseFocal; cam.cx = cam.baseCx; cam.cy = cam.baseCy;
+    camTY += (BL.clamp((deep - 3.2) / 2.6, 0, 1) - camTY) * Math.min(1, dt * 2.2);
+    setCam([MAIN_POS[0] + camX, MAIN_POS[1], MAIN_POS[2]], [MAIN_TGT[0] + camX * 0.8, MAIN_TGT[1], MAIN_TGT[2]]);
+    const k = BL.smooth(camTY), fN = cam.fitN, fD = cam.fitD;
+    cam.focal = BL.lerp(fN.focal, fD.focal, k); cam.cx = BL.lerp(fN.cx, fD.cx, k); cam.cy = BL.lerp(fN.cy, fD.cy, k);
     if (shake > 0.05) { cam.cx += (Math.random() - 0.5) * shake; cam.cy += (Math.random() - 0.5) * shake; shake *= Math.pow(0.02, dt); }
     const snaps = m.players.map(BL.snapPlayer);
     const sp = [sh.x, sh.y, sh.z];
