@@ -13,6 +13,7 @@
     this.ctrl = cfg.ctrl || 'bot';
     this.reachMul = this.ctrl === 'human' ? 1.12 : 1; // vùng chạm rộng hơn chút cho người chơi cảm ứng
     this.aggro = cfg.aggro !== undefined ? cfg.aggro : 0.5;
+    this.play = cfg.play || 'all';
     this.look = { color: cfg.color || '#d33', hair: cfg.hair || '#1a120c', skin: cfg.skin || '#e0aa82', shorts: cfg.shorts || '#1b1d28' };
     this.x = 0; this.y = side * 3.5; this.vx = 0; this.vy = 0;
     this.face = side < 0 ? Math.PI / 2 : -Math.PI / 2; // hướng nhìn (rad), mặc định nhìn về lưới
@@ -32,7 +33,7 @@
     this.st = { hits: 0, smash: 0, maxSmash: 0, winners: 0, errors: 0, defOk: 0, defFail: 0 };
   }
   Player.prototype.fatigue = function () {
-    return 0.68 + 0.32 * Math.min(1, this.energy / 60);
+    return 0.8 + 0.2 * Math.min(1, this.energy / 50);
   };
 
   function Match(opts) {
@@ -184,9 +185,11 @@
       p.st.smash++;
       p.st.maxSmash = Math.max(p.st.maxSmash, kmh);
     }
-    p.energy = Math.max(0, p.energy - BL.SHOTS[plan.shot].cost * 1.4 * p.d.drain);
+    p.energy = Math.max(0, p.energy - BL.SHOTS[plan.shot].cost * 1.05 * p.d.drain);
     const o = this.opp(p);
-    o.reactT = o.d.reactTime + BL.rand() * 0.06 + (plan.shot === 'drop' || plan.shot === 'crossnet' ? 0.05 : 0);
+    // cú mềm bằng cổ tay (ve, bỏ nhỏ, kéo chéo) đánh lừa đối thủ: khởi động chậm hơn
+    const soft = plan.shot === 'drop' || plan.shot === 'crossnet' || plan.shot === 'net';
+    o.reactT = o.d.reactTime + BL.rand() * 0.06 + (soft ? 0.02 + p.stats.wrist * 0.0012 : 0);
     o.target = null; o.leave = false; o.planK = -1;
     p.target = null; p.leave = false;
     this.emit({ type: 'hit', who: p.idx, shot: plan.shot, kmh, serve: !!isServe, x: c[0], y: c[1], z: c[2], net: sh.flight.netHit, cord: sh.flight.netCord });
@@ -345,8 +348,9 @@
     const spd = Math.hypot(p.vx, p.vy);
     p.gait += spd * DT / 0.62 * Math.PI; // nửa chu kỳ mỗi bước ~0.62 m
     // thể lực
-    if (this.phase === 'rally') p.energy -= (0.4 + (spd / d.speed) * (spd / d.speed) * 3.0) * d.drain * DT;
-    p.energy += d.regen * DT * (this.phase === 'rally' ? 0.06 : 0.45);
+    if (this.phase === 'rally') p.energy -= (0.2 + (spd / d.speed) * (spd / d.speed) * 2.8) * d.drain * DT;
+    // hồi sức: giữa các pha cầu, và một chút khi đứng thở trong pha cầu
+    p.energy += d.regen * DT * (this.phase !== 'rally' ? 0.42 : spd < 0.8 ? 0.07 : 0.02);
     p.energy = BL.clamp(p.energy, 0, 100);
     if (p.recover > 0) p.recover -= DT;
 
@@ -440,7 +444,7 @@
     let diff = Math.max(0, ctx.vin - 8) * 2.7 + stretch * stretch * 24 + Math.max(0, 0.55 - ctx.tAvail) * 70;
     if (ctx.kind === 'smash' && stretch > 0.6) diff += 6;
     if (ctx.kind === 'net' && ctx.z < 0.35) diff += 8; // cầu sát sàn
-    diff *= 1 + Math.max(0, 1 - p.energy / 100) * 0.6;
+    diff *= 1 + Math.max(0, 1 - p.energy / 100) * 0.35;
     const prob = BL.sigmoid((skill - diff + 16) / 7);
     return { prob, pressure: BL.clamp(diff / 75, 0, 0.9), stretch, skill, diff };
   };

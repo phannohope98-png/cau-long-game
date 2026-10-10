@@ -38,13 +38,14 @@
       reach: 0.92 + 0.0045 * f, // tầm với ngang từ tâm người (có vợt + bước lao)
       jump: 0.12 + 0.0042 * f + 0.0008 * a,
       reachUp: 2.42 + 0.0012 * f, // điểm chạm cao nhất khi đứng (đầu vợt)
-      speed: 3.5 + 0.024 * ft, // m/s
-      accel: 9 + 0.13 * ft,
-      reactTime: 0.3 - 0.0017 * r,
+      speed: 3.2 + 0.03 * ft, // m/s
+      accel: 8 + 0.16 * ft,
+      reactTime: 0.32 - 0.0022 * r,
+      wrist: w,
       defense: 0.35 * r + 0.25 * w + 0.25 * t + 0.15 * f,
       control: 0.5 * t + 0.25 * w + 0.25 * f,
-      drain: 1.5 - 0.01 * s,
-      regen: 4 + 0.12 * s,
+      drain: 1.3 - 0.006 * s,
+      regen: 5 + 0.1 * s,
       judge: 0.55 - 0.0045 * t, // sai số phán đoán cầu ra ngoài (m)
     };
   };
@@ -56,21 +57,21 @@
   // Thang đối thủ
   const mk = (o) => o;
   BL.OPPONENTS = [
-    mk({ id: 'tu', name: 'Anh Tư Hẻm', style: 'Đánh phong trào, hay phông', color: '#2e7bd6', hair: '#2a1a10', skin: '#d9a07a',
+    mk({ id: 'tu', play: 'clear', name: 'Anh Tư Hẻm', style: 'Đánh phong trào, hay phông', color: '#2e7bd6', hair: '#2a1a10', skin: '#d9a07a',
       stats: { wrist: 16, arm: 22, stamina: 20, flex: 15, tech: 14, foot: 18, react: 16 }, aggro: 0.2, reward: 6 }),
-    mk({ id: 'lan', name: 'Chị Lan CLB Phường', style: 'Bỏ nhỏ khó chịu', color: '#c2399b', hair: '#140c08', skin: '#e6b48f',
-      stats: { wrist: 32, arm: 22, stamina: 30, flex: 28, tech: 34, foot: 26, react: 26 }, aggro: 0.3, reward: 8 }),
-    mk({ id: 'hung', name: 'Hùng "Búa"', style: 'Đập mạnh, thủ kém', color: '#2b2f3a', hair: '#1a1a1a', skin: '#c98f66',
+    mk({ id: 'lan', play: 'net', name: 'Chị Lan CLB Phường', style: 'Bỏ nhỏ khó chịu', color: '#c2399b', hair: '#140c08', skin: '#e6b48f',
+      stats: { wrist: 32, arm: 22, stamina: 30, flex: 28, tech: 34, foot: 26, react: 26 }, aggro: 0.15, reward: 8 }),
+    mk({ id: 'hung', play: 'smash', name: 'Hùng "Búa"', style: 'Đập mạnh, thủ kém', color: '#2b2f3a', hair: '#1a1a1a', skin: '#c98f66',
       stats: { wrist: 40, arm: 55, stamina: 32, flex: 32, tech: 30, foot: 32, react: 28 }, aggro: 0.75, reward: 10 }),
-    mk({ id: 'minh', name: 'Minh Tường Đồng', style: 'Thủ chắc, chạy nhiều', color: '#2e9e5b', hair: '#221510', skin: '#dba580',
+    mk({ id: 'minh', play: 'defend', name: 'Minh Tường Đồng', style: 'Thủ chắc, chạy nhiều', color: '#2e9e5b', hair: '#221510', skin: '#dba580',
       stats: { wrist: 42, arm: 38, stamina: 60, flex: 50, tech: 46, foot: 55, react: 55 }, aggro: 0.3, reward: 12 }),
-    mk({ id: 'vy', name: 'Vy Tốc Độ', style: 'Tạt nhanh, ép sát lưới', color: '#e08a1e', hair: '#3b2414', skin: '#ecbd98',
+    mk({ id: 'vy', play: 'drive', name: 'Vy Tốc Độ', style: 'Tạt nhanh, ép sát lưới', color: '#e08a1e', hair: '#3b2414', skin: '#ecbd98',
       stats: { wrist: 62, arm: 50, stamina: 55, flex: 60, tech: 60, foot: 70, react: 65 }, aggro: 0.55, reward: 14 }),
-    mk({ id: 'khang', name: 'Khang Tuyển Tỉnh', style: 'Toàn diện', color: '#6a3fc9', hair: '#0e0a08', skin: '#d39d76',
+    mk({ id: 'khang', play: 'all', name: 'Khang Tuyển Tỉnh', style: 'Toàn diện', color: '#6a3fc9', hair: '#0e0a08', skin: '#d39d76',
       stats: { wrist: 68, arm: 68, stamina: 68, flex: 66, tech: 70, foot: 68, react: 68 }, aggro: 0.5, reward: 17 }),
-    mk({ id: 'quoc', name: 'Quốc Gia Lâm', style: 'Đập 350 km/h', color: '#f2c522', hair: '#111', skin: '#c48a60',
+    mk({ id: 'quoc', play: 'smash', name: 'Quốc Gia Lâm', style: 'Đập 350 km/h', color: '#f2c522', hair: '#111', skin: '#c48a60',
       stats: { wrist: 80, arm: 88, stamina: 72, flex: 75, tech: 76, foot: 74, react: 75 }, aggro: 0.7, reward: 20 }),
-    mk({ id: 'legend', name: 'Huyền Thoại Lin', style: 'Hoàn hảo', color: '#1d1d24', hair: '#050505', skin: '#d8a882',
+    mk({ id: 'legend', play: 'all', name: 'Huyền Thoại Lin', style: 'Hoàn hảo', color: '#1d1d24', hair: '#050505', skin: '#d8a882',
       stats: { wrist: 92, arm: 90, stamina: 90, flex: 90, tech: 94, foot: 90, react: 92 }, aggro: 0.6, reward: 30 }),
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

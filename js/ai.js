@@ -79,6 +79,30 @@
       if (zone === 'front') shot = oppFront ? (r < 0.65 ? 'lift' : 'net') : r < 0.5 ? 'net' : r < 0.7 ? 'crossnet' : 'lift';
       else shot = r < 0.6 ? 'block' : 'defend';
     }
+    // lối chơi riêng của từng đối thủ: đổi một phần lựa chọn theo sở trường
+    const r2 = BL.rand();
+    switch (p.play) {
+      case 'net': // thích bỏ nhỏ, ve
+        if (z >= 2.05 && zone !== 'front' && r2 < 0.45) shot = 'drop';
+        else if (zone === 'front' && z < 1.4 && r2 < 0.5) shot = r2 < 0.3 ? 'net' : 'crossnet';
+        else if (zone !== 'front' && z < 1.05 && r2 < 0.4) shot = 'defend';
+        break;
+      case 'clear': // đánh phong trào: phông/hất nhiều
+        if (z >= 2.05 && zone === 'back' && r2 < 0.5) shot = 'clear';
+        else if (z < 1.05 && r2 < 0.5) shot = zone === 'front' ? 'lift' : 'block';
+        break;
+      case 'defend': // thủ chắc: đánh cao sâu, chờ đối thủ hỏng
+        if (z >= 2.05 && zone === 'back' && r2 < 0.4) shot = 'clear';
+        else if (z < 2.05 && zone !== 'front' && r2 < 0.45) shot = 'block';
+        break;
+      case 'drive': // tạt nhanh, ép sát
+        if (z >= 0.9 && z < 2.2 && zone !== 'front' && r2 < 0.6) shot = 'drive';
+        else if (zone === 'front' && z < 1.4 && r2 < 0.35) shot = 'net';
+        break;
+      case 'smash': // thấy cầu cao là đập
+        if (z >= 2.05 && zone !== 'front' && !tired && r2 < 0.45) shot = 'jsmash';
+        break;
+    }
     // đánh vào chỗ trống: ngược phía đối thủ, đôi khi đánh trả ngược (wrong-foot)
     let side = Math.abs(opp.x) > 0.3 ? -Math.sign(opp.x) : BL.rand() < 0.5 ? -1 : 1;
     if (BL.rand() < 0.18) side = -side;

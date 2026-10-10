@@ -6,7 +6,7 @@ for (const s of BL.STATS) {
   let pw = 0, pl = 0, gw = 0;
   for (let i = 0; i < N; i++) {
     const a = base(); a[s.id] = 70;
-    const r = run(a, base(), 3000 + i * 31, 'quick');
+    const r = run(a, base(), 3000 + i * 31, process.argv[3] || 'one');
     gw += r.winner === 0 ? 1 : 0;
     pw += r.score.history.length ? r.score.history[0][0] : r.score.pts[0];
     pl += r.score.history.length ? r.score.history[0][1] : r.score.pts[1];

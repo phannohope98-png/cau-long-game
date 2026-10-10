@@ -92,7 +92,7 @@
     const safety = BL.clamp((ctx.pressure || 0) + (ctx.stretch || 0) * 0.5, 0, 1);
     let tx = aimX * W * (1 - 0.45 * safety), depth, plan = null;
     const deepSafe = 0.7 * safety;
-    const fat = 1 + Math.max(0, 1 - p.energy / 100) * 0.9;
+    const fat = 1 + Math.max(0, 1 - p.energy / 100) * 0.6;
     const z0 = c[2];
 
     const geo = (tx, depth) => {
@@ -192,7 +192,7 @@
         for (let k = 0; k < 10; k++) {
           g = geo(tx, depth);
           plan = BL.solveAngle(z0, spd, g.dist, g.rNet, g.hNet, -75 * D2R, 12 * D2R);
-          if (plan.res.clear >= (shot === 'kill' ? 0.08 : 0.06 + Math.abs(c[1]) * 0.03) || depth > C.HALF_L - 0.4) break;
+          if (plan.res.clear >= (shot === 'kill' ? 0.08 : 0.04 + Math.abs(c[1]) * 0.022) || depth > C.HALF_L - 0.4) break;
           depth += 0.45;
         }
         break;
@@ -215,7 +215,10 @@
 
     // Sai số: góc nâng, góc ngang, lực — nhân theo kỹ thuật, độ với, áp lực, mệt
     const sg = BL.SHOTS[shot].sig;
-    const m = d.acc * (1 + 0.5 * (ctx.stretch || 0)) * (1 + 1.0 * (ctx.pressure || 0)) * fat;
+    // cổ tay khéo: cú mềm (bỏ nhỏ, ve, tạt, đỡ) chuẩn hơn
+    const soft = BL.SHOTS[shot].kind === 'net' || shot === 'drop' || shot === 'drive' || shot === 'block';
+    const wr = soft ? 1.25 - 0.005 * d.wrist : 1;
+    const m = d.acc * wr * (1 + 0.5 * (ctx.stretch || 0)) * (1 + 1.0 * (ctx.pressure || 0)) * fat;
     const th = plan.theta + BL.gauss() * sg[0] * D2R * m;
     const az = g.az + BL.gauss() * sg[1] * D2R * m;
     const spd = plan.speed * (1 + BL.gauss() * sg[2] * m);

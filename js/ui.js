@@ -91,7 +91,7 @@
       stamina: `Hao sức <b>x${d.drain.toFixed(2)}</b> • hồi <b>${d.regen.toFixed(1)}</b>/giây`,
       flex: `Tầm với <b>${(d.reach * 1.3).toFixed(2)} m</b> (lao người) • bật nhảy <b>${Math.round(d.jump * 100)} cm</b>`,
       tech: `Sai số <b>x${d.acc.toFixed(2)}</b> • cách vạch <b>${Math.round(d.sideMargin * 100)} cm</b> • điều cầu <b>${Math.round(d.control)}</b>`,
-      foot: `Chạy <b>${d.speed.toFixed(2)} m/s</b> • tăng tốc <b>${d.accel.toFixed(1)} m/s²</b>`,
+      foot: `Chạy <b>${d.speed.toFixed(2)} m/s</b> (${(d.speed * 3.6).toFixed(1)} km/h) • tăng tốc <b>${d.accel.toFixed(1)} m/s²</b>`,
       react: `Khởi động <b>${Math.round(d.reactTime * 1000)} ms</b> • phòng thủ <b>${Math.round(d.defense)}</b>`,
     };
   }
@@ -167,15 +167,17 @@ Hở lưới bỏ nhỏ (m) = 0.20 − 0.0011·Cổ tay − 0.0007·Kỹ thuật
 Sai số             = 1.65 − 0.0105·Kỹ thuật  (× bị ép × với xa × mệt)
 Tầm với            = 0.92 + 0.0045·Dẻo dai  (×1.3 khi lao người)
 Bật nhảy (m)       = 0.12 + 0.0042·Dẻo dai + 0.0008·Cánh tay
-Tốc chạy (m/s)     = 3.5 + 0.024·Tốc độ chân
-Khởi động (s)      = 0.30 − 0.0017·Phản ứng
+Tốc chạy (m/s)     = 3.2 + 0.03·Tốc độ chân   (tăng tốc 8 + 0.16·Tốc độ chân)
+Khởi động (s)      = 0.32 − 0.0022·Phản ứng
+Cú mềm (ve/bỏ nhỏ/tạt/đỡ): sai số × (1.25 − 0.005·Cổ tay); đối thủ chậm thêm 0.02 + 0.0012·Cổ tay giây
 Phòng thủ          = 0.35·Phản ứng + 0.25·Cổ tay + 0.25·Kỹ thuật + 0.15·Dẻo dai
 Điều cầu           = 0.50·Kỹ thuật + 0.25·Cổ tay + 0.25·Dẻo dai
-Hao sức            = 1.5 − 0.01·Thể lực;  hồi = 4 + 0.12·Thể lực</div>
+Hao sức            = 1.3 − 0.006·Thể lực;  hồi = 5 + 0.1·Thể lực</div>
       <h3>Đỡ được hay không? (chênh lệch chỉ số)</h3>
       <div class="formula">Độ khó = 2.7·(tốc độ cầu tới − 8) + 24·(độ với)² + 70·(0.55 − thời gian phản ứng có được)
 Kỹ năng = Phòng thủ (cầu nhanh) hoặc Điều cầu (cầu chậm); đỡ phản xạ tự động −8
-Tỉ lệ chạm tốt = 1 / (1 + e^−((Kỹ năng − Độ khó + 16)/7))   (mệt làm Độ khó tăng tới 60%)
+Tỉ lệ chạm tốt = 1 / (1 + e^−((Kỹ năng − Độ khó + 16)/7))   (mệt làm Độ khó tăng tới 35%)
+Bấm nút chủ động: Kỹ năng +6 so với bot; hết thể lực: chạy chậm tới 20%, sai số tăng tới 60%
 Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, hoặc văng ra ngoài.</div>
       <p>${oddsExample()}</p>
     `);
@@ -372,7 +374,7 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
         flash(mine ? 'ĐIỂM CHO BẠN' : 'ĐIỂM CHO ĐỐI THỦ', e.reason + (e.ev.gamePoint === 0 ? ' • GAME POINT' : e.ev.gamePoint === 1 ? ' • đối thủ GAME POINT' : ''), 1.6);
         if (mine) vib([20, 40, 20]);
       } else if (e.type === 'interval') flash('Nghỉ giữa ván', 'một bên đã chạm 11 điểm', 2.6);
-      else if (e.type === 'gameover') flash(e.winner === 0 ? 'Bạn thắng ván!' : 'Đối thủ thắng ván', `ván ${m.score.gameNo} bắt đầu sau ít giây • đổi sân`, 3.5);
+      else if (e.type === 'gameover') flash(e.winner === 0 ? 'Bạn thắng ván!' : 'Đối thủ thắng ván', `ván ${m.score.gameNo} bắt đầu sau ít giây`, 3.5);
       else if (e.type === 'over') { overTimer = 2.2; flash(e.winner === 0 ? 'CHIẾN THẮNG!' : 'KẾT THÚC', '', 2.2); S.play('cheer', 1.6); }
       else if (e.type === 'servePos') {
         if (e.server === 0) sub(`Bạn giao • ô ${e.rl === 'R' ? 'phải' : 'trái'} (điểm ${match.score.pts[0] % 2 ? 'lẻ' : 'chẵn'})`, 1.8);
