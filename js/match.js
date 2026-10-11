@@ -95,6 +95,8 @@
       p.face = Math.atan2(-p.side, (0 - p.x) * 0.05);
     }
     srv.holding = true;
+    srv.serveKind = srv.ctrl === 'bot' ? BL.AI.chooseServe(srv) : 'serve_high';
+    this.botServe = srv.serveKind;
     this.shuttle.flight = null; this.shuttle.inPlay = false; this.shuttle.hitter = -1; this.shuttle.serve = true;
     this.placeHeld(srv);
     this.phase = 'serve';
@@ -147,7 +149,7 @@
     if (srv.swing) return;
     let shot = null;
     if (srv.ctrl === 'bot' || this.opts.autoHit && srv.ctrl === 'human' && this.phaseT > 2.5) {
-      if (this.phaseT > this.botServeDelay) shot = BL.AI.chooseServe(srv);
+      if (this.phaseT > this.botServeDelay) shot = this.botServe || BL.AI.chooseServe(srv);
     } else if (srv.intent && BL.SHOTS[srv.intent.shot].kind === 'serve') {
       shot = srv.intent.shot;
     }
@@ -191,8 +193,9 @@
     const soft = plan.shot === 'drop' || plan.shot === 'crossnet' || plan.shot === 'net';
     o.reactT = o.d.reactTime + BL.rand() * 0.06 + (soft ? 0.02 + p.stats.wrist * 0.0012 : 0);
     o.target = null; o.leave = false; o.planK = -1;
+    o.splitT = this.t + Math.max(0, o.d.reactTime - 0.12); // bước đệm ngay khi thấy đối thủ đánh
     p.target = null; p.leave = false;
-    this.emit({ type: 'hit', who: p.idx, shot: plan.shot, kmh, serve: !!isServe, x: c[0], y: c[1], z: c[2], net: sh.flight.netHit, cord: sh.flight.netCord });
+    this.emit({ type: 'hit', who: p.idx, shot: plan.shot, label: plan.label, kmh, serve: !!isServe, x: c[0], y: c[1], z: c[2], net: sh.flight.netHit, cord: sh.flight.netCord });
   };
 
   Match.prototype.stepRally = function () {
@@ -269,7 +272,7 @@
   Match.prototype.record = function () {
     if (Math.round(this.t / DT) % 2) return;
     const sh = this.shuttle;
-    const fr = { s: [sh.x, sh.y, sh.z], v: 0, p: this.players.map(snapPlayer) };
+    const fr = { s: [sh.x, sh.y, sh.z], v: 0, p: this.players.map((p) => snapPlayer(p, this)) };
     if (sh.flight) {
       const k = sh.pi, f = sh.flight, k0 = Math.max(0, k - 2);
       fr.d = [f.pts[k * 4] - f.pts[k0 * 4], f.pts[k * 4 + 1] - f.pts[k0 * 4 + 1], f.pts[k * 4 + 2] - f.pts[k0 * 4 + 2]];
@@ -280,11 +283,14 @@
   };
 
   // Trạng thái tối thiểu để vẽ một nhân vật (dùng chung cho chơi thật và tua lại)
-  function snapPlayer(p) {
+  function snapPlayer(p, m) {
     const sw = p.swing;
+    const t = m ? m.t : 0;
     return {
       x: p.x, y: p.y, face: p.face, vx: p.vx, vy: p.vy, gait: p.gait, jumpZ: p.jumpZ, lunge: p.lunge,
-      holding: p.holding, side: p.side, look: p.look, energy: p.energy,
+      holding: p.holding, side: p.side, kit: p.look, energy: p.energy, idx: p.idx,
+      split: p.splitT !== undefined ? BL.clamp((t - p.splitT) / 0.32, 0, 1) : 1,
+      receiving: !!(m && m.phase === 'serve' && m.score.server !== p.idx), serveKind: p.serveKind,
       sw: sw ? { kind: sw.kind, t: sw.t, tc: sw.tc, dur: sw.dur, c: sw.c, fh: sw.fh, shot: sw.shot, hit: sw.hit } : null,
     };
   }
@@ -388,7 +394,9 @@
       if (k0 < 0) k0 = k;
       if ((k - k0) * DT > 0.3) break;
       const st = hd / reach;
-      const sc = st * st + (z < 0.35 ? 0.45 : 0) - (z > 2.0 ? 0.45 * (Math.min(z, 3.3) - 2.0) : 0) + (k - k0) * DT * 0.4;
+      // cầu bổng sát lưới: ưu tiên chạm sớm ở điểm cao để vồ lưới
+      const killPt = Math.abs(y) < 1.8 && z > BL.netHeight(x) + 0.12 ? 0.6 : 0;
+      const sc = st * st + (z < 0.35 ? 0.45 : 0) - (z > 2.0 ? 0.45 * (Math.min(z, 3.3) - 2.0) : 0) + (k - k0) * DT * 0.4 - killPt;
       if (sc < bestS) { bestS = sc; best = { k, x, y, z, v: pts[k * 4 + 3], dt }; }
     }
     return best;
@@ -509,14 +517,29 @@
   };
 
   // shot mà từng nút đang đại diện cho người chơi
+  // Có cơ hội vồ lưới: cầu đối thủ sắp bay qua cao sát lưới trong tầm với
+  Match.prototype.killChance = function (pIdx) {
+    const p = this.players[pIdx], sh = this.shuttle;
+    if (this.phase !== 'rally' || !sh.flight || sh.hitter === pIdx || BL.zoneOf(p.y) !== 'front') return false;
+    const f = sh.flight, pts = f.pts;
+    for (let k = sh.pi; k < f.n; k += 2) {
+      const x = pts[k * 4], y = pts[k * 4 + 1], z = pts[k * 4 + 2];
+      if (y * p.side < 0.1 || Math.abs(y) > 1.8) continue;
+      if (z > BL.netHeight(x) + 0.12 && Math.hypot(x - p.x, y - p.y) < BL.reachAt(p.d, z) * p.reachMul * 1.35) return true;
+    }
+    return false;
+  };
+
   Match.prototype.buttons = function (pIdx) {
     const p = this.players[pIdx];
     if (this.phase === 'serve' && this.score.server === pIdx) return BL.ZONES.serve.shots;
+    if (this.killChance(pIdx)) return ['kill', 'crossnet', 'lift'];
     return BL.ZONES[BL.zoneOf(p.y)].shots;
   };
   Match.prototype.zone = function (pIdx) {
     const p = this.players[pIdx];
     if (this.phase === 'serve' && this.score.server === pIdx) return 'serve';
+    if (this.killChance(pIdx)) return 'kill';
     return BL.zoneOf(p.y);
   };
 })(typeof window !== 'undefined' ? window : globalThis);

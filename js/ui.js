@@ -22,8 +22,11 @@
   // ---------- trạng thái ----------
   let match = null, demo = null, paused = false, oppIdx = 0, ev0 = 0, overTimer = 0;
   const cv = $('#cv');
-  BL.Render.init(cv);
-  window.addEventListener('resize', () => BL.Render.resize());
+  // đồ hoạ 3D (WebGL); máy không hỗ trợ thì dùng bản vẽ 2D
+  let RND = BL.Render3D && BL.Render3D.init(cv) ? BL.Render3D : null;
+  if (!RND) { BL.Render.init(cv); RND = BL.Render; }
+  window.__renderer = RND === BL.Render3D ? '3d' : '2d';
+  window.addEventListener('resize', () => RND.resize());
 
   function newDemo() {
     const a = BL.OPPONENTS[5], b = BL.OPPONENTS[4];
@@ -146,7 +149,7 @@
       &nbsp;&nbsp;— <b>Giữa sân</b>: ➟ Tạt ngang • 🛡 Đỡ cầu bật lên cao sâu • 💥 Nhảy đập<br>
       &nbsp;&nbsp;— <b>Cuối sân</b> (&gt; 4.5 m): 🍃 Ve cầu (rơi gần lưới) • 🌈 Phông cầu (cao sâu) • 💥 Nhảy đập<br>
       • Bấm nút <b>trước</b> khi cầu tới: nhân vật tự vung đúng lúc cầu vào tầm. Vòng <b style="color:#ffd34d">vàng</b> = điểm cầu rơi, chuyển <b style="color:#4dff8c">xanh</b> khi bạn đứng đủ gần để đánh.<br>
-      • Cầu quá thấp để đập sẽ tự đổi thành tạt/đỡ; cầu bổng sát lưới khi bấm bỏ nhỏ sẽ thành <b>chụp lưới</b>. Bị đập mà chưa bấm: tự <b>đỡ phản xạ</b> (yếu hơn bấm chủ động).<br>
+      • Cầu quá thấp để đập sẽ tự đổi thành tạt/đỡ; đứng trên lưới mà cầu đối thủ bay bổng sát lưới thì nút đầu nhấp nháy thành <b>⚡ Vồ lưới</b> — bấm để đập cắm xuống.<br>• Mỗi nút có nhiều biến thể tự chọn theo tình huống: phông tấn công / phông cao sâu, ve nhanh / ve chậm, đập mạnh / đập nửa lực / đập vào người, hất cao / hất tấn công. Bị đập mà chưa bấm: tự <b>đỡ phản xạ</b> (yếu hơn bấm chủ động).<br>
       • Bàn phím: <kbd>WASD</kbd>/<kbd>mũi tên</kbd> di chuyển, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> = 3 nút, <kbd>P</kbd> tạm dừng.</p>
       <h3>Luật BWF đánh đơn</h3>
       <p>• Tính điểm trực tiếp (rally point): mỗi pha cầu đều có điểm. Ván tới <b>21</b>, phải hơn <b>2</b> điểm; 29-29 thì ai được <b>30</b> thắng. Trận chuẩn: thắng 2/3 ván. Nghỉ khi một bên chạm 11.<br>
@@ -329,6 +332,7 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
     $('#srv0').textContent = sc.server === 0 ? '🏸' : ''; $('#srv1').textContent = sc.server === 1 ? '🏸' : '';
     $('#enBar').style.width = Math.round(m.players[0].energy) + '%';
     $('#hud').classList.toggle('replay', m.phase === 'replay');
+    $('#btns').classList.toggle('kill', m.zone(0) === 'kill');
     const zone = m.zone(0);
     const shots = m.buttons(0);
     if (zone !== lastZone) {
@@ -348,7 +352,7 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
   function handleEvents(m, isDemo) {
     while (ev0 < m.events.length) {
       const e = m.events[ev0++];
-      BL.Render.effect(e);
+      RND.effect(e);
       if (isDemo) continue;
       const S = BL.Sound;
       if (e.type === 'hit') {
@@ -356,8 +360,9 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
         if (k === 'smash') S.play('smash'); else if (k === 'net' || e.shot === 'serve_short') S.play('soft'); else S.play('hit');
         if (e.who === 0) {
           vib(k === 'smash' ? 30 : 12);
-          sub(BL.SHOTS[e.shot].name + (k === 'smash' || e.shot === 'drive' || e.shot === 'clear' ? ` • ${Math.round(e.kmh)} km/h` : ''), 1.1);
-        } else if (k === 'smash') sub(`Đối thủ ${BL.SHOTS[e.shot].name.toLowerCase()} ${Math.round(e.kmh)} km/h!`, 1.2);
+          sub((e.label || BL.SHOTS[e.shot].name) + (k === 'smash' || e.shot === 'drive' || e.shot === 'clear' ? ` • ${Math.round(e.kmh)} km/h` : ''), 1.1);
+        } else if (k === 'smash') sub(`Đối thủ ${(e.label || BL.SHOTS[e.shot].name).toLowerCase()} ${Math.round(e.kmh)} km/h!`, 1.2);
+        else if (e.label) sub('Đối thủ: ' + e.label.toLowerCase(), 1);
       } else if (e.type === 'contact') {
         if (!e.ok && e.who === 0) flash('Đỡ hỏng!', `tỉ lệ chạm tốt chỉ ${pct(e.prob)}`, 1.2);
         else if (!e.ok && e.who === 1) flash('Đối thủ đỡ hỏng!', `tỉ lệ của bot ${pct(e.prob)}`, 1.2);
@@ -468,12 +473,12 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
         updateHud(dt);
         if (overTimer > 0) { overTimer -= dt; if (overTimer <= 0) result(); }
       }
-      BL.Render.draw(match, now / 1000);
+      RND.draw(match, now / 1000);
     } else {
       demo.update(dt);
-      while (demo.events.length) BL.Render.effect(demo.events.shift());
+      while (demo.events.length) RND.effect(demo.events.shift());
       if (demo.phase === 'over') newDemo();
-      BL.Render.draw(demo, now / 1000);
+      RND.draw(demo, now / 1000);
     }
     requestAnimationFrame(frame);
   }

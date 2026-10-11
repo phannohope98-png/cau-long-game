@@ -201,7 +201,7 @@
   function drawPlayer(s, shuttlePos) {
     if (s.holding && shuttlePos) s.heldPos = shuttlePos;
     const P = BL.Anim.pose(s);
-    const lk = s.look;
+    const lk = s.kit;
     const skin = lk.skin, shirt = lk.color, shorts = lk.shorts, hair = lk.hair;
     const OUT = 'rgba(10,12,18,0.85)';
     const sk2 = shade(skin, 0.82);
@@ -461,7 +461,7 @@
     const k = BL.smooth(camTY), fN = cam.fitN, fD = cam.fitD;
     cam.focal = BL.lerp(fN.focal, fD.focal, k); cam.cx = BL.lerp(fN.cx, fD.cx, k); cam.cy = BL.lerp(fN.cy, fD.cy, k);
     if (shake > 0.05) { cam.cx += (Math.random() - 0.5) * shake; cam.cy += (Math.random() - 0.5) * shake; shake *= Math.pow(0.02, dt); }
-    const snaps = m.players.map(BL.snapPlayer);
+    const snaps = m.players.map((p) => BL.snapPlayer(p, m));
     const sp = [sh.x, sh.y, sh.z];
     if (sh.inPlay) { fx.trail.push(sp.slice()); if (fx.trail.length > 14) fx.trail.shift(); }
     else fx.trail.length = 0;

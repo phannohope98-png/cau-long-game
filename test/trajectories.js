@@ -14,16 +14,19 @@ const shots = [
   ['net', [0.3, -0.9, 0.7], '#ce93d8', 'Bỏ nhỏ'],
   ['drive', [0.3, -3.5, 1.3], '#ff9800', 'Tạt ngang'],
   ['serve_high', [-0.4, -2.9, 0.85], '#90a4ae', 'Giao cao sâu'],
+  ['kill', [0.3, -0.7, 1.85], '#ffffff', 'Vồ lưới'],
   ['serve_short', [-0.4, -2.9, 0.98], '#f48fb1', 'Giao ngắn'],
 ];
 const side = [], top = [];
 for (const [s, c, col, name] of shots) {
-  const pl = BL.planShot(p, c, s, { opp, aimX: 0.3, rl: 'R', pressure: 0, stretch: 0 });
-  const f = BL.simulateFlight(c, pl.v, -1);
-  const pts = [];
-  for (let i = 0; i < f.n; i += 4) pts.push([f.pts[i * 4 + 1], f.pts[i * 4 + 2]]);
-  pts.push([f.land.y, 0]);
-  side.push({ col, name: `${name}: ${Math.round(pl.speed * 3.6)} km/h, bay ${f.tFlight.toFixed(2)} s, đỉnh ${f.apex.toFixed(1)} m`, pts });
+  for (let v = 0; v < 4; v++) {
+    const pl = BL.planShot(p, c, s, { opp, aimX: null, rl: 'R', pressure: 0, stretch: 0 });
+    const f = BL.simulateFlight(c, pl.v, -1);
+    const pts = [];
+    for (let i = 0; i < f.n; i += 4) pts.push([f.pts[i * 4 + 1], f.pts[i * 4 + 2]]);
+    pts.push([f.land.y, 0]);
+    side.push({ col, name: v ? null : `${name}: ${Math.round(pl.speed * 3.6)} km/h, bay ${f.tFlight.toFixed(2)} s${pl.label ? ' (' + pl.label + ')' : ''}`, pts });
+  }
   const lands = [];
   for (let i = 0; i < 150; i++) {
     const q = BL.planShot(p, c, s, { opp, aimX: null, rl: 'R', pressure: 0, stretch: 0.2 });
@@ -52,7 +55,7 @@ for (const [s, c, col, name] of shots) {
       x.strokeStyle = s.col; x.lineWidth = 2.5; x.beginPath();
       s.pts.forEach((q, j) => (j ? x.lineTo(SX(q[0]), SZ(q[1])) : x.moveTo(SX(q[0]), SZ(q[1]))));
       x.stroke();
-      x.fillStyle = s.col; x.font = '13px sans-serif'; x.fillText('■ ' + s.name, 900, 60 + i * 19);
+      if (s.name) { x.fillStyle = s.col; x.font = '13px sans-serif'; x.fillText('■ ' + s.name, 900, 60 + (i / 4) * 19); }
     });
     // --- nhìn từ trên: điểm rơi (sân đối thủ) ---
     const TX = (xx) => 100 + (xx + 3.05) * 50, TY = (yy) => 520 + yy * 50;

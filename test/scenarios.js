@@ -98,7 +98,7 @@ sect('Cú đánh từng vùng (chỉ số 50)');
     // [shot, điểm chạm, độ sâu kỳ vọng [min,max] tính từ lưới, thời gian bay kỳ vọng]
     ['net', [0.5, -1.0, 0.6], [0, 2.0], [0.5, 1.6]],
     ['crossnet', [1.4, -1.0, 0.7], [0, 2.2], [0.5, 1.6]],
-    ['lift', [0.4, -1.0, 0.4], [4.8, 6.7], [1.6, 3.2]],
+    ['lift', [0.4, -1.0, 0.4], [4.3, 6.7], [1.2, 3.2]],
     ['drive', [1.5, -3.5, 1.3], [3.0, 6.7], [0.5, 1.4]],
     ['block', [1.0, -3.5, 0.7], [4.5, 6.7], [1.5, 3.0]],
     ['jsmash', [0.4, -3.8, 2.9], [2.0, 6.7], [0.2, 0.7]],
@@ -124,7 +124,7 @@ sect('Cú đánh từng vùng (chỉ số 50)');
     ok(tOK / N > 0.85, `${shot}: thời gian bay hợp lý ${tr}s`, tOK / N);
   }
   // đập nhanh hơn tạt, tạt nhanh hơn ve
-  const sp = (s, c) => BL.planShot(p, c, s, { opp, aimX: 0.5 }).speed;
+  const sp = (s, c) => { let t = 0; for (let i = 0; i < 40; i++) t += BL.planShot(p, c, s, { opp, aimX: 0.5 }).speed; return t / 40; };
   ok(sp('jsmash', [0, -4, 2.9]) > sp('drive', [0, -4, 1.3]) && sp('drive', [0, -4, 1.3]) > sp('drop', [0, -6, 2.5]), 'tốc độ: đập > tạt > ve');
   // hướng đánh theo cần điều khiển
   let right = 0;

@@ -42,8 +42,12 @@ const { chromium } = require(path.join('C:/Users/KHAIMINHSOLAR/Desktop/game/node
   console.log('forced close call', ok);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: out('4-replay-a.png') });
-  await page.waitForTimeout(4600);
-  await page.screenshot({ path: out('4-replay-b.png') });
+  await page.waitForFunction(() => window.__game.match.phase === 'replay', null, { timeout: 60000 });
+  for (const [k, nm] of [[0.55, 'b1'], [0.95, 'b']]) {
+    await page.evaluate((k) => { window.__freeze = true; const m = window.__game.match, r = m.replay; m.phaseT = r.intro + r.play * k + (k > 0.9 ? 0.6 : 0); window.BL.Render3D.draw(m, performance.now() / 1000 + 5); }, k);
+    await page.screenshot({ path: out('4-replay-' + nm + '.png') });
+  }
+  await page.evaluate(() => { window.__freeze = false; });
   // các màn hình menu
   await page.evaluate(() => { window.__game.menu(); });
   for (const [sel, name] of [['[data-go="up"]', '5-upgrade'], ['[data-go="menu"]', null], ['[data-go="rules"]', '6-rules'], ['[data-go="menu"]', null], ['[data-go="ladder"]', '7-ladder']]) {

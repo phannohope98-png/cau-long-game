@@ -151,3 +151,6 @@ kbd { background: #222b45; border-radius: 4px; padding: 1px 6px; font-size: 12px
 @media (orientation: portrait) { #sub { top: calc(96px + var(--safe-t)); } #msg { top: 24%; } }
 #hud.replay #btns, #hud.replay #joyZone, #hud.replay #enWrap, #hud.replay #sb, #hud.replay #sub { opacity: 0; pointer-events: none; }
 #hud.replay #msg { top: 10%; }
+@keyframes killPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,210,60,.7); } 50% { transform: scale(1.1); box-shadow: 0 0 0 12px rgba(255,210,60,0); } }
+#btns.kill .shot[data-i="0"] { animation: killPulse .45s infinite; border-color: var(--acc); background: radial-gradient(circle at 40% 30%, rgba(255,230,120,.6), rgba(160,90,10,.85)); }
+#btns.kill #zoneLbl { background: var(--acc); color: #111; }

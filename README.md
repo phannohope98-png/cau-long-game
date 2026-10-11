@@ -2,6 +2,8 @@
 
 Game cầu lông đánh đơn chạy trên trình duyệt điện thoại — chơi tại **https://phannohope98-png.github.io/cau-long-game/**
 
+- Đồ hoạ 3D (WebGL/Three.js): nhà thi đấu, sàn gỗ, thảm BWF, lưới, đèn & bóng đổ, người 3D có khối cơ, vợt & cầu lông vũ 3D (cầu lật đầu, xoáy khi bỏ nhỏ).
+- Động tác đúng kỹ thuật: bước đệm, bước đuổi, đập nghiêng vai + đá chéo chân, lao người, trái tay, vồ lưới.
 - Góc nhìn chéo từ trên xuống sau lưng: thấy cả sân mình, nhân vật mình và một phần sân đối thủ.
 - Cần điều khiển bên trái; 3 nút bên phải đổi theo chỗ đứng (trên lưới / giữa sân / cuối sân).
 - Vật lý cầu lông thật: lực cản bậc 2, vận tốc rơi tối đa 6.8 m/s, quỹ đạo bất đối xứng; mọi cú đánh được giải ngược ra góc + lực.

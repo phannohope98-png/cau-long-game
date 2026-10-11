@@ -13,7 +13,8 @@
       // vừa đánh đi: lùi về giữa, lệch nhẹ về hướng cầu đi (góc trả về rộng nhất)
       bx = BL.clamp(sh.flight.land.x * 0.18, -0.5, 0.5);
       const ld = Math.abs(sh.flight.land.y);
-      by = s * (ld < 2.6 ? 3.0 : 3.7); // vừa bỏ nhỏ -> đứng gần lên để chặn
+      // vừa bỏ nhỏ -> áp sát lưới chờ vồ; vừa ve -> nhích lên; cầu sâu -> giữa sân
+      by = s * (ld < 1.6 ? 2.0 : ld < 3 ? 2.9 : 3.6);
     }
     return { x: bx, y: by };
   };
@@ -73,10 +74,10 @@
         shot = r < pS ? 'jsmash' : r < pS + pD ? 'drop' : 'clear';
       }
     } else if (z >= 1.05) {
-      if (zone === 'front') shot = z > BL.netHeight(c[0]) + 0.3 ? 'kill' : r < 0.55 ? 'net' : r < 0.75 ? 'crossnet' : 'lift';
+      if (zone === 'front') shot = z > BL.netHeight(c[0]) + 0.12 && ay < 1.9 ? 'kill' : r < 0.45 ? 'net' : r < 0.65 ? 'crossnet' : r < 0.8 ? 'push' : 'lift';
       else shot = r < 0.45 + ag * 0.2 ? 'drive' : r < 0.8 ? 'block' : 'defend';
     } else {
-      if (zone === 'front') shot = oppFront ? (r < 0.65 ? 'lift' : 'net') : r < 0.5 ? 'net' : r < 0.7 ? 'crossnet' : 'lift';
+      if (zone === 'front') shot = oppFront ? (r < 0.6 ? 'lift' : r < 0.8 ? 'push' : 'net') : r < 0.45 ? 'net' : r < 0.65 ? 'crossnet' : r < 0.72 ? 'push' : 'lift';
       else shot = r < 0.6 ? 'block' : 'defend';
     }
     // lối chơi riêng của từng đối thủ: đổi một phần lựa chọn theo sở trường

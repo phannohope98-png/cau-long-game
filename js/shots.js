@@ -13,7 +13,8 @@
     jsmash: { name: 'Nhảy đập', icon: '💥', kind: 'smash', sig: [0.8, 1.4, 0.02], cost: 9 },
     drop: { name: 'Ve cầu', icon: '🍃', kind: 'drop', sig: [1.0, 1.6, 0.03], cost: 3 },
     clear: { name: 'Phông cầu', icon: '🌈', kind: 'clear', sig: [1.2, 1.6, 0.025], cost: 4 },
-    kill: { name: 'Chụp lưới', icon: '⚡', kind: 'smash', sig: [1.2, 2.0, 0.03], cost: 4 },
+    kill: { name: 'Vồ lưới', icon: '⚡', kind: 'smash', sig: [1.2, 2.0, 0.03], cost: 4 },
+    push: { name: 'Đẩy cầu', icon: '⇢', kind: 'drive', sig: [1.2, 1.8, 0.03], cost: 2 },
     defend: { name: 'Đỡ phản xạ', icon: '✋', kind: 'net', sig: [2.0, 3.0, 0.03], cost: 2 },
     smash: { name: 'Đập cầu', icon: '💥', kind: 'smash', sig: [0.8, 1.4, 0.02], cost: 6 },
     serve_short: { name: 'Giao ngắn', icon: '🪶', kind: 'serve', sig: [1.0, 1.2, 0.02], cost: 1 },
@@ -28,6 +29,7 @@
     mid: { name: 'Giữa sân', shots: ['drive', 'block', 'jsmash'] },
     back: { name: 'Cuối sân', shots: ['drop', 'clear', 'jsmash'] },
     serve: { name: 'Giao cầu', shots: ['serve_short', 'serve_high', 'serve_flick'] },
+    kill: { name: 'Vồ lưới!', shots: ['kill', 'crossnet', 'lift'] },
   };
   BL.zoneOf = (y) => {
     const a = Math.abs(y);
@@ -38,13 +40,13 @@
   BL.adaptShot = function (shot, z, ay, p) {
     const h = BL.netHeight(0);
     if (shot === 'jsmash' || shot === 'smash') {
-      if (ay < 2.0 && z > h + 0.25) return 'kill';
+      if (ay < 2.0 && z > h + 0.15) return 'kill';
       if (z >= 2.0) return z > p.d.reachUp - 0.05 ? 'jsmash' : 'smash';
       if (z >= 1.0) return 'drive';
       return 'block';
     }
     if (shot === 'net' || shot === 'crossnet') {
-      if (ay < 2.0 && z > h + 0.35) return 'kill'; // cầu bổng trên lưới -> chụp
+      if (ay < 1.9 && z > h + 0.12) return 'kill'; // cầu bổng sát lưới -> vồ lưới
       return shot;
     }
     if (shot === 'clear' || shot === 'drop') {
@@ -87,7 +89,12 @@
       if (Math.abs(opp.x) > 0.25) return -Math.sign(opp.x);
       return BL.rand() < 0.5 ? -1 : 1;
     };
-    if (aimX === null || aimX === undefined) aimX = autoSide() * (0.75 + BL.rand() * 0.25);
+    // không chỉ hướng: chọn điểm rơi rải khắp sân, ưu tiên chỗ trống xa đối thủ, đôi khi đánh giữa / đánh ngược
+    if (aimX === null || aimX === undefined) {
+      const r = BL.rand();
+      aimX = r < 0.12 ? (BL.rand() - 0.5) * 0.4 : autoSide() * (0.3 + 0.7 * Math.pow(BL.rand(), 0.6));
+    } else aimX = BL.clamp(aimX + (BL.rand() - 0.5) * 0.25, -1, 1);
+    let label = null;
     // bị ép (với xa, cầu nhanh) thì đánh an toàn: vào giữa sân, không sát vạch
     const safety = BL.clamp((ctx.pressure || 0) + (ctx.stretch || 0) * 0.5, 0, 1);
     let tx = aimX * W * (1 - 0.45 * safety), depth, plan = null;
@@ -108,32 +115,44 @@
     let g;
     switch (shot) {
       case 'clear': {
-        depth = L - deepSafe;
+        // phông tấn công (thấp, nhanh, qua đầu đối thủ) hoặc phông phòng thủ (cao sâu, lấy thời gian)
+        const attack = safety < 0.25 && BL.rand() < 0.45;
+        label = attack ? 'Phông tấn công' : 'Phông cao sâu';
+        depth = L - deepSafe - BL.rand() * 0.45;
         g = geo(tx, depth);
-        for (const deg of [38, 34, 30, 27]) {
-          const r = BL.solveSpeed(z0, deg * D2R, g.dist, g.rNet, g.hNet, 5, d.clearMax);
+        const degs = attack ? [22, 25, 28, 32] : [48, 44, 40, 36, 32, 28];
+        for (const deg of degs) {
+          const r = BL.solveSpeed(z0, (deg + (BL.rand() - 0.5) * 3) * D2R, g.dist, g.rNet, g.hNet, 5, d.clearMax);
           plan = r;
           if (!r.short && r.res.clear > 0.4) break;
         }
         break;
       }
       case 'lift': case 'block': {
-        depth = L - (shot === 'block' ? 0.35 : 0.15) - deepSafe;
-        tx *= 0.8;
+        const atk = shot === 'lift' && safety < 0.2 && BL.rand() < 0.35;
+        label = atk ? 'Hất tấn công' : null;
+        depth = L - (shot === 'block' ? 0.35 : 0.15) - deepSafe - BL.rand() * 0.5;
+        tx *= 0.85;
         const vmax = d.clearMax * (shot === 'block' ? 0.82 : 0.9);
         g = geo(tx, depth);
-        // hất/đỡ: góc dốc, đủ cao để đối thủ không chặn được giữa đường
-        for (const deg of [64, 58, 52, 46, 40, 34]) {
-          const r = BL.solveSpeed(z0, deg * D2R, g.dist, g.rNet, g.hNet, 3, vmax);
-          const better = !plan || (plan.short && !r.short) || (plan.short === r.short && r.res.clear > plan.res.clear);
-          if (better) plan = r;
-          if (!r.short && r.res.clear > 0.5) { plan = r; break; }
-        }
+        // hất/đỡ: góc dốc, đủ cao để đối thủ không chặn được giữa đường; hất tấn công thấp & nhanh hơn
+        const tryDegs = (degs, need) => {
+          plan = null;
+          for (const deg of degs) {
+            const r = BL.solveSpeed(z0, deg * D2R, g.dist, g.rNet, g.hNet, 3, vmax);
+            const better = !plan || (plan.short && !r.short) || (plan.short === r.short && r.res.clear > plan.res.clear);
+            if (better) plan = r;
+            if (!r.short && r.res.clear > need) { plan = r; break; }
+          }
+        };
+        if (atk) tryDegs([40, 44, 48], 0.35);
+        // sát lưới quá thì góc thấp không qua được -> hất cao
+        if (!atk || plan.short || plan.res.clear < 0.3) { label = null; tryDegs([64, 58, 52, 46, 40, 34], 0.5); }
         break;
       }
       case 'serve_high': case 'serve_flick': {
         const sx = BL.courtXSign(o, ctx.rl);
-        tx = sx * (1.0 + BL.rand() * 0.9) * 0.9;
+        tx = sx * (0.3 + BL.rand() * 1.9);
         depth = C.HALF_L - 0.3 - d.backMargin * 0.5;
         g = geo(tx, depth);
         const degs = shot === 'serve_high' ? [62, 58, 54, 50] : [30, 27, 34, 38];
@@ -146,8 +165,9 @@
       }
       case 'serve_short': {
         const sx = BL.courtXSign(o, ctx.rl);
-        tx = sx * (0.25 + BL.rand() * 0.35);
-        depth = C.SHORT_SVC + 0.14 + (d.acc - 0.6) * 0.22;
+        // giao ngắn: hay vào góc chữ T, đôi khi ra góc biên
+        tx = sx * (BL.rand() < 0.75 ? 0.12 + BL.rand() * 0.45 : 1.2 + BL.rand() * 0.9);
+        depth = C.SHORT_SVC + 0.12 + (d.acc - 0.6) * 0.22 + BL.rand() * 0.2;
         g = geo(tx, depth);
         plan = solveNetLike(z0, g.dist, g.rNet, g.hNet, d.netClear + 0.04, 20, false);
         break;
@@ -155,15 +175,18 @@
       case 'net': case 'crossnet': case 'defend': {
         if (shot === 'crossnet') tx = (Math.abs(c[0]) > 0.3 ? -Math.sign(c[0]) : -Math.sign(opp.x || 1)) * W * 0.95;
         else if (shot === 'net') tx = BL.clamp(c[0] * 0.9 + aimX * 0.3, -W, W);
-        depth = shot === 'defend' ? 1.0 + BL.rand() * 1.2 : 0.35 + (d.netClear - 0.035) * 3 + BL.rand() * 0.3;
+        depth = shot === 'defend' ? 0.8 + BL.rand() * 1.6 : 0.3 + (d.netClear - 0.035) * 3 + BL.rand() * 0.5;
         g = geo(tx, depth);
         const over = z0 > g.hNet + 0.05;
-        plan = solveNetLike(z0, g.dist, g.rNet, g.hNet, shot === 'defend' ? 0.18 : d.netClear + 0.02, 30, over);
+        plan = solveNetLike(z0, g.dist, g.rNet, g.hNet, shot === 'defend' ? 0.24 : d.netClear + 0.02, 30, over);
         break;
       }
       case 'drop': {
-        let spd = d.dropSpeed;
-        depth = 1.1 + (d.acc - 0.6) * 0.6 + BL.rand() * 0.5;
+        // ve nhanh (cắt cầu, rơi giữa sân trước) hoặc ve chậm (rơi sát lưới)
+        const fast = BL.rand() < 0.5;
+        label = fast ? 'Ve nhanh' : 'Ve chậm';
+        let spd = d.dropSpeed * (fast ? 1.3 + BL.rand() * 0.15 : 0.85 + BL.rand() * 0.1);
+        depth = (fast ? 1.9 + BL.rand() * 0.9 : 0.7 + BL.rand() * 0.7) + (d.acc - 0.6) * 0.4;
         for (let k = 0; k < 6; k++) {
           g = geo(tx, depth);
           plan = BL.solveAngle(z0, spd, g.dist, g.rNet, g.hNet, -55 * D2R, 35 * D2R);
@@ -172,12 +195,13 @@
         }
         break;
       }
-      case 'drive': {
+      case 'drive': case 'push': {
         // tạt: góc thấp nhất (nhanh nhất) mà vẫn qua lưới an toàn và rơi trong sân
-        depth = 4.6 + BL.rand() * 1.4;
+        depth = 3.2 + BL.rand() * 3.0;
         g = geo(tx, depth);
+        const vD = d.drive * (shot === 'push' ? 0.6 : 0.85 + BL.rand() * 0.15);
         for (let deg = -10; deg <= 30; deg += 2) {
-          const r = BL.solveSpeed(z0, deg * D2R, g.dist, g.rNet, g.hNet, 4, d.drive);
+          const r = BL.solveSpeed(z0, deg * D2R, g.dist, g.rNet, g.hNet, 4, vD);
           if (r.short) continue;
           if (!plan || r.res.clear > plan.res.clear) plan = r;
           if (r.res.clear >= 0.12) { plan = r; break; }
@@ -186,9 +210,14 @@
         break;
       }
       case 'smash': case 'jsmash': case 'kill': {
-        let spd = shot === 'kill' ? d.smash * 0.7 : d.smash + (shot === 'jsmash' ? d.jumpBonus : 0);
+        let spd = shot === 'kill' ? d.smash * (0.55 + BL.rand() * 0.2) : d.smash + (shot === 'jsmash' ? d.jumpBonus : 0);
         spd *= 1 - Math.max(0, 1 - p.energy / 100) * 0.15;
-        depth = shot === 'kill' ? 2.2 + BL.rand() * 1.2 : 3.0 + BL.rand() * 1.8;
+        depth = shot === 'kill' ? 1.2 + BL.rand() * 2.0 : 2.6 + BL.rand() * 2.4;
+        if (shot !== 'kill') {
+          const r = BL.rand();
+          if (safety > 0.35 || r < 0.22) { spd *= 0.72; depth = 2.2 + BL.rand() * 1.4; label = 'Đập nửa lực'; }
+          else if (r < 0.45 && opp) { tx = BL.clamp(opp.x + (BL.rand() < 0.5 ? 0.25 : -0.25), -W, W); label = 'Đập vào người'; }
+        }
         for (let k = 0; k < 10; k++) {
           g = geo(tx, depth);
           plan = BL.solveAngle(z0, spd, g.dist, g.rNet, g.hNet, -75 * D2R, 12 * D2R);
@@ -223,6 +252,6 @@
     const az = g.az + BL.gauss() * sg[1] * D2R * m;
     const spd = plan.speed * (1 + BL.gauss() * sg[2] * m);
     const v = [spd * Math.cos(th) * Math.cos(az), spd * Math.cos(th) * Math.sin(az), spd * Math.sin(th)];
-    return { shot, v, speed: spd, target: [tx, g.ty], plan };
+    return { shot, v, speed: spd, target: [tx, g.ty], plan, label };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
