@@ -8,8 +8,16 @@
   const V = BL.v3;
   const A = (BL.Anim = {});
 
-  const THIGH = 0.45, SHIN = 0.45, UARM = 0.3, FARM = 0.28, RACKET_C = 0.52;
-  A.dims = { THIGH, SHIN, UARM, FARM, RACKET_C };
+  // Kích thước cơ thể (m). Khi nạp mô hình người thật, đo từ khung xương mô hình và ghi đè qua A.setBody().
+  const B = { thigh: 0.45, shin: 0.45, uarm: 0.3, farm: 0.28, racketC: 0.52, ankle: 0.075, pelvis: 0.87, tor: 0.5, shw: 0.2, hipw: 0.1, neck: 0.06, head: 0.15 };
+  let THIGH, SHIN, UARM, FARM, RACKET_C;
+  A.setBody = function (o) {
+    Object.assign(B, o || {});
+    THIGH = B.thigh; SHIN = B.shin; UARM = B.uarm; FARM = B.farm; RACKET_C = B.racketC;
+    A.dims = { THIGH, SHIN, UARM, FARM, RACKET_C };
+  };
+  A.body = B;
+  A.setBody();
 
   // IK 2 khớp: gốc a, đích t, độ dài l1,l2, hướng khớp giữa (pole). Trả về [giữa, cuối]
   function ik(a, t, l1, l2, pole) {
@@ -39,7 +47,8 @@
   // ---- khung hình chính ----
   // h: tay cầm vợt, r: hướng cán vợt, y: xoay vai, hy: xoay hông, l: tay trái,
   // fl/fr: chân trái/phải [phải, trước], sq: hạ trọng tâm, ln: nghiêng thân, ep: hướng khuỷu
-  const READY = { h: [0.3, 0.3, 1.22], r: [0.12, 0.32, 1], y: 0, hy: 0, l: [-0.32, 0.28, 1.12], fl: [-0.21, 0.02], fr: [0.23, -0.06], sq: 0.07, ln: 0.16 };
+  // thế chờ đơn: chân rộng hơn vai, gối chùng, trọng tâm trên mũi chân, vợt giơ trước ngực-mặt
+  const READY = { h: [0.3, 0.32, 1.3], r: [0.1, 0.3, 1], y: 0, hy: 0, l: [-0.3, 0.28, 1.15], fl: [-0.23, 0.02], fr: [0.25, -0.06], sq: 0.08, ln: 0.17 };
   const K = (o) => Object.assign({}, READY, o);
   const KF = {
     over: { // phông / đập / ve trên đầu thuận tay
@@ -90,10 +99,14 @@
   };
   A.KF = KF;
   const SERVE_READY = { serveS: K({ h: [0.02, 0.3, 0.99], r: [-0.4, 0.2, -1], y: 0.15, hy: 0.1, l: [-0.04, 0.46, 1.0], fl: [-0.16, -0.18], fr: [0.12, 0.22], sq: 0.04, ln: 0.12 }), serveH: KF.serveH.back };
+  // thế thủ khi đối thủ chuẩn bị đập: hạ thấp, chân rộng, vợt trước bụng chếch trái tay
+  const DEF = K({ h: [0.06, 0.4, 1.02], r: [-0.4, 0.62, 0.55], fl: [-0.28, 0.0], fr: [0.29, 0.0], sq: 0.17, ln: 0.26, l: [-0.32, 0.22, 1.02] });
+  // thế trên lưới: chân phải trước, vợt giơ cao trước mặt chờ chặn/vồ
+  const NETS = K({ h: [0.28, 0.4, 1.48], r: [0.05, 0.3, 1], fl: [-0.2, -0.12], fr: [0.22, 0.2], sq: 0.1, ln: 0.24, l: [-0.3, 0.25, 1.2] });
   const RECEIVE = K({ h: [0.32, 0.12, 1.5], r: [0.1, 0.15, 1], fl: [-0.18, 0.2], fr: [0.22, -0.25], sq: 0.12, ln: 0.2, l: [-0.3, 0.32, 1.25] });
 
   function swingSet(sw) {
-    if (sw.kind === 'serve') return sw.shot === 'serve_short' ? KF.serveS : KF.serveH;
+    if (sw.kind === 'serve') return sw.shot === 'serve_short' || sw.shot === 'serve_wide' ? KF.serveS : KF.serveH;
     if (sw.shot === 'kill') return KF.kill;
     const z = sw.c ? sw.c[2] : 1;
     if ((sw.kind === 'net' || sw.shot === 'push') && z < 1.45) return KF.net;
@@ -132,11 +145,15 @@
 
     // ---- khung hình động tác ----
     let set = null, seg = 'ready', k = 0;
-    const rest = s.holding ? (SERVE_READY[s.serveKind === 'serve_short' ? 'serveS' : 'serveH']) : s.receiving ? RECEIVE : READY;
+    let rest = s.holding ? (SERVE_READY[s.serveKind === 'serve_short' || s.serveKind === 'serve_wide' ? 'serveS' : 'serveH']) : s.receiving ? RECEIVE : READY;
+    if (rest === READY && (s.stDef > 0.01 || s.stNet > 0.01)) {
+      rest = mix(READY, DEF, s.stDef || 0);
+      if (s.stNet > 0.01) rest = mix(rest, NETS, s.stNet);
+    }
     let P = rest;
     if (sw) {
       set = swingSet(sw);
-      const pr = sw.kind === 'serve' ? (sw.shot === 'serve_short' ? SERVE_READY.serveS : set.back) : READY;
+      const pr = sw.kind === 'serve' ? (set === KF.serveS ? SERVE_READY.serveS : set.back) : READY;
       if (sw.t < sw.tc) {
         const u = sw.t / sw.tc;
         if (u < 0.62) { seg = 'wind'; k = ease(u / 0.62); P = mix(pr, set.back, k); }
@@ -187,7 +204,7 @@
       fl = lerp2(fl, [-ux * 0.42 - 0.13 * uy, -uy * 0.42 + 0.13 * ux], lunge * 0.9);
       frz = 0; flz = 0;
     }
-    let pelvisH = 0.87 - P.sq - lunge * 0.32 - spl * 0.05 - Math.abs(Math.cos(ph)) * 0.03 * run;
+    let pelvisH = B.pelvis - P.sq - lunge * 0.32 - spl * 0.05 - Math.abs(Math.cos(ph)) * 0.03 * run;
     // trên không: đá chéo chân (scissor kick) khi nhảy đập
     const air = s.jumpZ > 0.02 ? Math.min(1, s.jumpZ / 0.22) : 0;
     if (air > 0) {
@@ -204,13 +221,14 @@
     const lean = P.ln + lunge * 0.42 + Math.min(0.12, spd * 0.03) * (mvF > -0.3 ? 1 : -0.5);
     const ldx = lerp(0, ux, Math.min(1, lunge * 1.5)), ldy = lerp(1, uy, Math.min(1, lunge * 1.5));
     const ll = Math.hypot(ldx, ldy) || 1;
-    const TOR = 0.5;
+    const TOR = B.tor;
     const chestL = [pelvisL[0] + ldx / ll * Math.sin(lean) * TOR, pelvisL[1] + ldy / ll * Math.sin(lean) * TOR, pelvisH + Math.cos(lean) * TOR];
-    const shR = rot2([0.2, 0], yaw);
+    const shR = rot2([B.shw, 0], yaw);
     const rShL = [chestL[0] + shR[0], chestL[1] + shR[1], chestL[2] - 0.035];
     const lShL = [chestL[0] - shR[0], chestL[1] - shR[1], chestL[2] - 0.035];
     // khung tay dựng cho thân chuẩn -> dời theo thân thật
-    const STD = [0, Math.sin(READY.ln) * TOR, 0.87 - READY.sq + Math.cos(READY.ln) * TOR];
+    // khung hình tay dựng cho thân chuẩn cao 1m75 (vai ~1.42 m)
+    const STD = [0, Math.sin(READY.ln) * 0.5, 0.87 - READY.sq + Math.cos(READY.ln) * 0.5];
     const dlt = V.sub(chestL, STD);
     const sh = (p) => V.add(p, dlt);
 
@@ -257,10 +275,10 @@
     const rkHead = V.add(rHand, V.mul(rdW, RACKET_C));
 
     // ---- chân ----
-    const hipR2 = rot2([0.1, 0], hy);
+    const hipR2 = rot2([B.hipw, 0], hy);
     const hipR = L2W([pelvisL[0] + hipR2[0], pelvisL[1] + hipR2[1], pelvisH]);
     const hipL = L2W([pelvisL[0] - hipR2[0], pelvisL[1] - hipR2[1], pelvisH]);
-    const ankR = L2W([fr[0], fr[1], frz + 0.075]), ankL = L2W([fl[0], fl[1], flz + 0.075]);
+    const ankR = L2W([fr[0], fr[1], frz + B.ankle]), ankL = L2W([fl[0], fl[1], flz + B.ankle]);
     const hipF = V.norm(D2W([-Math.sin(hy), Math.cos(hy), 0])), hipRw = V.norm(D2W([hipR2[0], hipR2[1], 0]));
     const kneeR = ik(hipR, ankR, THIGH, SHIN, V.add(V.add(hipF, V.mul(hipRw, 0.3)), [0, 0, 0.1]))[0];
     const kneeL = ik(hipL, ankL, THIGH, SHIN, V.add(V.add(hipF, V.mul(hipRw, -0.3)), [0, 0, 0.1]))[0];
@@ -270,13 +288,13 @@
       return V.norm(V.add(hipF, V.mul(hipRw, side * 0.35)));
     };
     const dR = toeDir(1), dL = toeDir(-1);
-    const toeR = V.add(ankR, V.add(V.mul(dR, 0.17), [0, 0, -0.055 + (lunge > 0.4 ? 0.04 * lunge : 0)]));
-    const toeL = V.add(ankL, V.add(V.mul(dL, 0.17), [0, 0, -0.055]));
+    const toeR = V.add(ankR, V.add(V.mul(dR, 0.17), [0, 0, -(B.ankle - 0.02) + (lunge > 0.4 ? 0.04 * lunge : 0)]));
+    const toeL = V.add(ankL, V.add(V.mul(dL, 0.17), [0, 0, -(B.ankle - 0.02)]));
     toeR[2] = Math.max(base[2] + 0.02, toeR[2]); toeL[2] = Math.max(base[2] + 0.02, toeL[2]);
 
     // ---- đầu: nhìn theo cầu ----
-    const neck = V.add(chest, [ldx / ll * 0.02 * F[0], ldy / ll * 0.02 * F[1], 0.06]);
-    const head = V.add(neck, [bodyF[0] * 0.025, bodyF[1] * 0.025, 0.15]);
+    const neck = V.add(chest, [ldx / ll * 0.02 * F[0], ldy / ll * 0.02 * F[1], B.neck]);
+    const head = V.add(neck, [bodyF[0] * 0.025, bodyF[1] * 0.025, B.head]);
     let look = bodyF;
     if (s.lookAt) {
       const d = V.sub(s.lookAt, head);

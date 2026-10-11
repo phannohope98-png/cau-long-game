@@ -2,6 +2,8 @@
 
 Game cầu lông đánh đơn chạy trên trình duyệt điện thoại — chơi tại **https://phannohope98-png.github.io/cau-long-game/**
 
+- Người thật 3D: mô hình người có khung xương đầy đủ cả 5 ngón (mô hình Ready Player Me trong bộ ví dụ của three.js, nạp lúc chạy từ jsDelivr; mất mạng thì dùng người dựng sẵn), mặc đồ thi đấu tự may bám xương, tóc ngắn ôm sọ, tay nắm cán vợt kiểu bắt tay.
+- 4 nút mỗi vùng, biểu tượng vẽ đường bay của cú; thế đứng thủ / thế trên lưới theo tình huống.
 - Đồ hoạ 3D (WebGL/Three.js): nhà thi đấu, sàn gỗ, thảm BWF, lưới, đèn & bóng đổ, người 3D có khối cơ, vợt & cầu lông vũ 3D (cầu lật đầu, xoáy khi bỏ nhỏ).
 - Động tác đúng kỹ thuật: bước đệm, bước đuổi, đập nghiêng vai + đá chéo chân, lao người, trái tay, vồ lưới.
 - Góc nhìn chéo từ trên xuống sau lưng: thấy cả sân mình, nhân vật mình và một phần sân đối thủ.

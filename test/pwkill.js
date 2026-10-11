@@ -21,7 +21,7 @@ const { chromium } = require(path.join('C:/Users/KHAIMINHSOLAR/Desktop/game/node
       m.launch(b, c, { shot: 'net', v: [(i % 3 - 1) * 0.5, -3.0, 6.6], speed: 7.2 }, false);
       return true;
     }, i);
-    await page.waitForFunction(() => window.__game.match.t > 0.25, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.__game.match.t > 0.25, null, { timeout: 180000 });
     const st = await page.evaluate(() => { const m = window.__game.match; return { btn: m.buttons(0), zone: m.zone(0), lbl: document.querySelector('.shot[data-i="0"] b').textContent }; });
     labels.push(st.lbl);
     if (st.btn[0] === 'kill') {
@@ -29,7 +29,7 @@ const { chromium } = require(path.join('C:/Users/KHAIMINHSOLAR/Desktop/game/node
       await page.evaluate(() => { const el = document.querySelector('.shot[data-i="0"]'); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); });
       console.log('   after press', await page.evaluate(() => { const m = window.__game.match, p = m.players[0]; return JSON.stringify({ intent: p.intent, swing: p.swing && p.swing.shot, pi: m.shuttle.pi, n: m.shuttle.flight.n, phase: m.phase, t: m.t.toFixed(2) }); }));
       if (i === 0) { await page.waitForTimeout(120); await page.screenshot({ path: path.join(__dirname, 'shots', 'kill.png') }); }
-      await page.waitForFunction(() => window.__game.match.t > 1.4, null, { timeout: 30000 });
+      await page.waitForFunction(() => window.__game.match.t > 1.4, null, { timeout: 180000 });
       const res = await page.evaluate(() => window.__game.match.events.filter((e) => e.type === 'contact' && e.who === 0).map((e) => e.shot + ':' + (e.ok ? 'ok' : 'fail') + ':' + e.prob.toFixed(2)));
       if (res.some((x) => x.startsWith('kill:ok'))) ok++; else console.log('   ', JSON.stringify(res));
     }

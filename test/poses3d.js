@@ -4,9 +4,10 @@ const { chromium } = require(path.join('C:/Users/KHAIMINHSOLAR/Desktop/game/node
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=angle'] });
   const page = await (await browser.newContext({ viewport: { width: 420, height: 520 }, deviceScaleFactor: 1 })).newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = []; page.on('pageerror', (e) => errs.push(e.message)); page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errs.push(m.text()); });
   await page.goto('file:///' + path.resolve(__dirname, '..', 'index.html').split(path.sep).join('/'));
-  await page.waitForTimeout(500);
+  await page.waitForFunction(() => window.BL.HumanRig && (window.BL.HumanRig.ready || window.BL.HumanRig.failed), null, { timeout: 60000 });
+  console.log('rig', await page.evaluate(() => window.BL.HumanRig.ready), JSON.stringify(await page.evaluate(() => window.BL.Anim.body)));
   await page.evaluate(() => { window.__freeze = true; document.getElementById('screens').innerHTML = ''; });
   const poses = ['Chờ', 'Chạy', 'Lùi nghiêng', 'Đập: kéo vợt', 'Đập: chạm', 'Đập: theo đà', 'Vồ lưới', 'Lao bỏ nhỏ', 'Tạt thuận', 'Tạt trái tay', 'Hất thấp trái', 'Giao ngắn', 'Giao cao'];
   const dir = path.join(__dirname, 'shots', 'p3d'); fs.mkdirSync(dir, { recursive: true });

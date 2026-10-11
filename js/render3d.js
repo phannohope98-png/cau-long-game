@@ -105,10 +105,10 @@
     scene.background = new T.Color('#0d1222');
     scene.fog = new T.Fog('#0d1222', 30, 60);
     // ánh sáng: đèn trần mạnh từ trên + đèn bán cầu (trần sáng, sàn ấm) + đèn phụ không đổ bóng
-    const hemi = new T.HemisphereLight('#dfe6ff', '#3a2e22', 0.42);
+    const hemi = new T.HemisphereLight('#dfe6ff', '#3a2e22', 0.22);
     hemi.position.set(0, 0, 1);
     scene.add(hemi);
-    sun = new T.DirectionalLight('#fff3e0', 1.55);
+    sun = new T.DirectionalLight('#fff3e0', 1.0);
     sun.position.set(2.5, -5, 16);
     sun.target.position.set(0, 0, 0);
     sun.castShadow = true;
@@ -119,12 +119,18 @@
     sun.shadow.normalBias = 0.02;
     sun.shadow.radius = 3;
     scene.add(sun); scene.add(sun.target);
-    const fill = new T.DirectionalLight('#c9d8ff', 0.25);
+    // đèn rọi sân: vùng sân sáng rực, xung quanh tối dần như nhà thi đấu thật
+    for (const yy of [-4, 4]) {
+      const sp = new T.SpotLight('#fff6e6', 2.2, 34, 0.62, 0.7, 1.2);
+      sp.position.set(0, yy * 0.6, 15); sp.target.position.set(0, yy, 0);
+      scene.add(sp); scene.add(sp.target);
+    }
+    const fill = new T.DirectionalLight('#c9d8ff', 0.2);
     fill.position.set(-6, 8, 9);
     scene.add(fill);
 
     // sàn gỗ
-    const wood = std('#ffffff', 0.42, { map: woodTex() });
+    const wood = std('#ffffff', 0.26, { map: woodTex(), envMapIntensity: 1.2 });
     const floor = new T.Mesh(new T.PlaneGeometry(36, 44), wood);
     floor.receiveShadow = true;
     scene.add(floor);
@@ -233,10 +239,10 @@
       const sc = 0.9 + rnd() * 0.2;
       mm.compose(new T.Vector3(p[0], p[1], p[2]), q, new T.Vector3(1, 1, sc));
       crowd.setMatrixAt(j, mm);
-      crowd.setColorAt(j, col.set(shirts[Math.floor(rnd() * shirts.length)]).multiplyScalar(0.13 + rnd() * 0.1));
+      crowd.setColorAt(j, col.set(shirts[Math.floor(rnd() * shirts.length)]).multiplyScalar(0.07 + rnd() * 0.06));
       mm.compose(new T.Vector3(p[0], p[1], p[2] + 0.36 * sc), new T.Quaternion(), new T.Vector3(1, 1, 1.1));
       heads.setMatrixAt(j, mm);
-      heads.setColorAt(j, col.set(skins[Math.floor(rnd() * skins.length)]).multiplyScalar(0.2));
+      heads.setColorAt(j, col.set(skins[Math.floor(rnd() * skins.length)]).multiplyScalar(0.12));
     });
     scene.add(crowd); scene.add(heads);
     R3.crowd = crowd;
@@ -246,6 +252,22 @@
     box(0.4, 44, 14, wallM, 18, 0, 7); box(0.4, 44, 14, wallM, -18, 0, 7);
     const lampM = new T.MeshBasicMaterial({ color: '#fffbe8' });
     for (let y = -9; y <= 9; y += 4.5) for (const x of [-4, 4]) box(1.4, 0.5, 0.08, lampM, x, y, 12.5);
+  }
+
+  // Ánh sáng môi trường: phòng tối có dàn đèn trần + bảng LED -> phản chiếu thật trên sàn gỗ bóng, da, vợt
+  function buildEnv() {
+    const env = new T.Scene();
+    env.background = new T.Color('#0b0e18');
+    const room = new T.Mesh(new T.BoxGeometry(60, 60, 30), new T.MeshBasicMaterial({ color: '#141a2b', side: T.BackSide }));
+    room.position.z = 10; env.add(room);
+    const lamp = new T.MeshBasicMaterial({ color: new T.Color(6, 5.8, 5.2) });
+    for (let y = -9; y <= 9; y += 4.5) for (const x of [-4, 4]) { const l = new T.Mesh(new T.PlaneGeometry(1.6, 0.7), lamp); l.position.set(x, y, 12); l.rotation.x = Math.PI; env.add(l); }
+    const cols = ['#c62f3a', '#1f6fd1', '#e3a21a', '#18915b', '#7a3fc9'];
+    cols.forEach((c, i) => { const p = new T.Mesh(new T.PlaneGeometry(4, 1), new T.MeshBasicMaterial({ color: new T.Color(c).multiplyScalar(1.5), side: T.DoubleSide })); p.position.set(-8 + i * 4, 10, 0.5); p.rotation.x = Math.PI / 2; env.add(p); });
+    const floor = new T.Mesh(new T.PlaneGeometry(60, 60), new T.MeshBasicMaterial({ color: '#3a2a1c' })); env.add(floor);
+    const pm = new T.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(env, 0.035).texture;
+    pm.dispose();
   }
 
   // quả cầu: đế bần + váy lông vũ (nón hở) + băng chỉ; trục +Y = hướng đế (đầu bay)
@@ -292,6 +314,9 @@
     camera = new T.PerspectiveCamera(40, 1, 0.1, 120);
     camera.up.set(0, 0, 1);
     buildArena();
+    buildEnv();
+    // nạp người thật (mô hình có khung xương); trong lúc chờ dùng người dựng sẵn
+    if (BL.HumanRig) BL.HumanRig.load((ok) => { R3.realHumans = ok; });
     shuttle = buildShuttle(); scene.add(shuttle);
     shShadow = new T.Mesh(new T.CircleGeometry(0.035, 16), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }));
     shShadow.position.z = 0.012; scene.add(shShadow);
@@ -358,11 +383,12 @@
 
   // ---------- người ----------
   function ensureHumans(snaps) {
+    const real = BL.HumanRig && BL.HumanRig.ready;
     snaps.forEach((s, i) => {
-      const key = JSON.stringify(s.kit);
+      const key = JSON.stringify(s.kit) + (real ? 'R' : 'P');
       if (!humans[i] || humanKits[i] !== key) {
         if (humans[i]) scene.remove(humans[i].group);
-        humans[i] = new BL.Human3D(s.kit);
+        humans[i] = (real && BL.HumanRig.Person(s.kit)) || new BL.Human3D(s.kit);
         humanKits[i] = key;
         scene.add(humans[i].group);
       }
@@ -373,7 +399,7 @@
     snaps.forEach((s, i) => {
       if (s.holding && held) s.heldPos = sp;
       s.lookAt = sp;
-      humans[i].update(BL.Anim.pose(s));
+      humans[i].update(BL.Anim.pose(s), s);
     });
   }
 

@@ -144,13 +144,14 @@
     show(`<h2><button class="back" data-go="menu">←</button> Luật & cách chơi</h2>
       <h3>Điều khiển</h3>
       <p>• <b>Cần trái</b>: di chuyển. Lúc chạm cầu, đẩy cần sang trái/phải = đánh cầu về hướng đó (không đẩy: tự đánh vào chỗ trống của đối thủ).<br>
-      • <b>3 nút phải</b> đổi theo chỗ bạn đứng:<br>
-      &nbsp;&nbsp;— <b>Trên lưới</b> (cách lưới &lt; 2.3 m): 🪶 Bỏ nhỏ • ↗ Kéo cầu chéo sang lưới bên kia • ⤴ Hất cầu ra cuối sân<br>
-      &nbsp;&nbsp;— <b>Giữa sân</b>: ➟ Tạt ngang • 🛡 Đỡ cầu bật lên cao sâu • 💥 Nhảy đập<br>
-      &nbsp;&nbsp;— <b>Cuối sân</b> (&gt; 4.5 m): 🍃 Ve cầu (rơi gần lưới) • 🌈 Phông cầu (cao sâu) • 💥 Nhảy đập<br>
+      • <b>4 nút phải</b> đổi theo chỗ bạn đứng (hình trên nút = đường bay của cú):<br>
+      &nbsp;&nbsp;— <b>Trên lưới</b> (cách lưới &lt; 2.3 m): Bỏ nhỏ • Kéo cầu chéo • Đẩy cầu (thấp nhanh vào giữa sân) • Hất cầu ra cuối sân<br>
+      &nbsp;&nbsp;— <b>Giữa sân</b>: Tạt ngang • Chặn lưới (đỡ cú đập cho rơi sát lưới) • Đỡ bật cao (đẩy cầu cao sâu) • Nhảy đập<br>
+      &nbsp;&nbsp;— <b>Cuối sân</b> (&gt; 4.5 m): Ve cầu • Phông cầu • Đập cầu (đứng đập, chắc hơn) • Nhảy đập (mạnh hơn, tốn sức)<br>
+      &nbsp;&nbsp;— <b>Giao cầu</b>: Giao ngắn (góc chữ T) • Giao ngắn góc (ra biên) • Giao cao sâu • Giao bổng nhanh<br>
       • Bấm nút <b>trước</b> khi cầu tới: nhân vật tự vung đúng lúc cầu vào tầm. Vòng <b style="color:#ffd34d">vàng</b> = điểm cầu rơi, chuyển <b style="color:#4dff8c">xanh</b> khi bạn đứng đủ gần để đánh.<br>
       • Cầu quá thấp để đập sẽ tự đổi thành tạt/đỡ; đứng trên lưới mà cầu đối thủ bay bổng sát lưới thì nút đầu nhấp nháy thành <b>⚡ Vồ lưới</b> — bấm để đập cắm xuống.<br>• Mỗi nút có nhiều biến thể tự chọn theo tình huống: phông tấn công / phông cao sâu, ve nhanh / ve chậm, đập mạnh / đập nửa lực / đập vào người, hất cao / hất tấn công. Bị đập mà chưa bấm: tự <b>đỡ phản xạ</b> (yếu hơn bấm chủ động).<br>
-      • Bàn phím: <kbd>WASD</kbd>/<kbd>mũi tên</kbd> di chuyển, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> = 3 nút, <kbd>P</kbd> tạm dừng.</p>
+      • Bàn phím: <kbd>WASD</kbd>/<kbd>mũi tên</kbd> di chuyển, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>I</kbd> = 4 nút, <kbd>P</kbd> tạm dừng.</p>
       <h3>Luật BWF đánh đơn</h3>
       <p>• Tính điểm trực tiếp (rally point): mỗi pha cầu đều có điểm. Ván tới <b>21</b>, phải hơn <b>2</b> điểm; 29-29 thì ai được <b>30</b> thắng. Trận chuẩn: thắng 2/3 ván. Nghỉ khi một bên chạm 11.<br>
       • Bên thắng pha cầu được giao. Điểm người giao <b>chẵn → ô phải</b>, <b>lẻ → ô trái</b>; cầu giao phải bay chéo vào ô đối diện.<br>
@@ -243,9 +244,9 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
     d.className = 'tut';
     d.innerHTML = `<div class="card"><h2>🏸 Cách chơi nhanh</h2>
       <p>1. <b>Kéo cần trái</b> để chạy tới vòng <b style="color:#ffd34d">vàng</b> (chỗ cầu rơi). Đứng đúng chỗ, vòng chuyển <b style="color:#4dff8c">xanh</b>.<br>
-      2. <b>Bấm 1 trong 3 nút phải</b> trước khi cầu tới — nhân vật tự vung đúng lúc.<br>
+      2. <b>Bấm 1 trong 4 nút phải</b> trước khi cầu tới — nhân vật tự vung đúng lúc. Hình trên nút là đường bay của cú đó.<br>
       3. Nút đổi theo chỗ đứng: <b>trên lưới</b> / <b>giữa sân</b> / <b>cuối sân</b>.<br>
-      4. Giao cầu: bấm Giao ngắn / Giao cao sâu / Giao bổng nhanh.<br>
+      4. Giao cầu: Giao ngắn / Giao ngắn góc / Giao cao sâu / Giao bổng nhanh.<br>
       5. Đẩy cần sang trái/phải lúc đánh để chọn hướng cầu.</p>
       <button class="big pri" id="tutOk" style="width:100%;text-align:center">ĐÃ HIỂU — VÀO TRẬN</button></div>`;
     document.body.appendChild(d);
@@ -323,6 +324,21 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
     el.textContent = t; el.classList.add('on'); subT = dur || 1.4;
   }
   const btnEls = [...document.querySelectorAll('.shot')];
+  // Biểu tượng nút: sơ đồ đường bay nhìn ngang (người đánh bên trái, lưới giữa)
+  const TRAJ = {
+    net: 'M10 15 Q14 8 17 21', crossnet: 'M10 15 Q14 8 18 21', push: 'M6 13 Q16 11 26 20', lift: 'M8 20 Q19 -6 29 21',
+    drive: 'M3 12 L28 15', blocknet: 'M6 15 Q13 9 18 21', block: 'M6 19 Q18 -4 30 21', jsmash: 'M5 2 L24 21', smash: 'M5 6 L25 21',
+    drop: 'M4 5 Q12 3 19 21', clear: 'M4 8 Q16 -6 30 21', kill: 'M11 4 L18 21', defend: 'M6 15 Q13 9 18 21',
+    serve_short: 'M6 17 Q13 9 19 21', serve_wide: 'M6 17 Q14 9 21 21', serve_high: 'M6 17 Q17 -8 30 21', serve_flick: 'M6 17 Q16 3 29 21',
+  };
+  function shotIcon(id) {
+    const d = TRAJ[id] || 'M4 12 L28 12';
+    const end = d.match(/-?\d+(\.\d+)?/g).slice(-2).map(Number);
+    const hot = id === 'jsmash' || id === 'smash' || id === 'kill';
+    const cross = id === 'crossnet' || id === 'serve_wide' ? '<path d="M22 6 l4 -3 M26 3 l-1 4" stroke="#9fe8ff" stroke-width="1.6" stroke-linecap="round"/>' : '';
+    const jump = id === 'jsmash' ? '<path d="M3 21 l2 -3 l2 3" stroke="#fff" stroke-width="1.4" fill="none"/>' : '';
+    return `<svg viewBox="0 0 32 24"><line x1="1" y1="22" x2="31" y2="22" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/><line x1="14" y1="22" x2="14" y2="13" stroke="rgba(255,255,255,.8)" stroke-width="1.6"/><path d="${d}" fill="none" stroke="${hot ? '#ffd34d' : '#fff'}" stroke-width="${hot ? 2.6 : 2}" stroke-linecap="round" ${id === 'drop' || id === 'net' || id === 'blocknet' ? 'stroke-dasharray="0"' : ''}/><circle cx="${end[0]}" cy="${Math.min(21, end[1])}" r="2.2" fill="${hot ? '#ffd34d' : '#9fe8ff'}"/>${cross}${jump}</svg>`;
+  }
   let lastZone = '';
   function updateHud(dt) {
     const m = match;
@@ -338,7 +354,7 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
     if (zone !== lastZone) {
       lastZone = zone;
       $('#zoneLbl').textContent = BL.ZONES[zone].name.toUpperCase();
-      btnEls.forEach((b, i) => { const s = BL.SHOTS[shots[i]]; b.querySelector('i').textContent = s.icon; b.querySelector('b').textContent = s.name; b.dataset.shot = shots[i]; });
+      btnEls.forEach((b, i) => { const s = BL.SHOTS[shots[i]]; b.querySelector('i').innerHTML = shotIcon(shots[i]); b.querySelector('b').textContent = s.name; b.dataset.shot = shots[i]; if (!b.querySelector('kbd')) b.insertAdjacentHTML('beforeend', `<kbd>${'JKLI'[i]}</kbd>`); });
     }
     const me = m.players[0];
     const q = me.intent ? me.intent.shot : me.swing && !me.swing.hit ? me.swing.shot : null;
@@ -443,6 +459,7 @@ Hỏng → cầu đánh khung: rúc lưới, bổng ngắn dễ bị đập, ho�
     if (e.code === 'KeyJ' || e.code === 'Digit1') pressBtn(0);
     if (e.code === 'KeyK' || e.code === 'Digit2') pressBtn(1);
     if (e.code === 'KeyL' || e.code === 'Digit3') pressBtn(2);
+    if (e.code === 'KeyI' || e.code === 'Digit4' || e.code === 'Semicolon') pressBtn(3);
     if (e.code === 'KeyP' || e.code === 'Escape') { if (paused && match) resume(); else pause(); }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });

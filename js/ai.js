@@ -78,7 +78,7 @@
       else shot = r < 0.45 + ag * 0.2 ? 'drive' : r < 0.8 ? 'block' : 'defend';
     } else {
       if (zone === 'front') shot = oppFront ? (r < 0.6 ? 'lift' : r < 0.8 ? 'push' : 'net') : r < 0.45 ? 'net' : r < 0.65 ? 'crossnet' : r < 0.72 ? 'push' : 'lift';
-      else shot = r < 0.6 ? 'block' : 'defend';
+      else shot = r < 0.5 ? 'block' : r < 0.8 ? 'blocknet' : 'defend';
     }
     // lối chơi riêng của từng đối thủ: đổi một phần lựa chọn theo sở trường
     const r2 = BL.rand();
@@ -115,6 +115,6 @@
     const r = BL.rand();
     const lowLevel = p.d.control < 45;
     if (lowLevel) return r < 0.45 ? 'serve_short' : r < 0.95 ? 'serve_high' : 'serve_flick';
-    return r < 0.6 ? 'serve_short' : r < 0.9 ? 'serve_high' : 'serve_flick';
+    return r < 0.5 ? 'serve_short' : r < 0.6 ? 'serve_wide' : r < 0.9 ? 'serve_high' : 'serve_flick';
   };
 })(typeof window !== 'undefined' ? window : globalThis);

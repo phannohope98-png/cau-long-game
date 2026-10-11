@@ -157,8 +157,9 @@
     srv.intent = null;
     // Động tác giao cầu thấp tay: chạm cầu dưới 1.15 m, trước thân
     const fx = Math.cos(srv.face), fy = Math.sin(srv.face);
-    const c = [srv.x + fx * 0.45 + fy * 0.12, srv.y + fy * 0.45 - fx * 0.12, shot === 'serve_short' ? 0.98 : 0.85];
-    srv.swing = { shot, kind: 'serve', t: 0, tc: 0.42, dur: 0.75, c, cIdx: -1, hit: false, jumpH: 0, lungeAmt: 0, fh: shot !== 'serve_short', serve: true };
+    const c = [srv.x + fx * 0.45 + fy * 0.12, srv.y + fy * 0.45 - fx * 0.12, shot === 'serve_short' || shot === 'serve_wide' ? 0.98 : 0.85];
+    srv.serveKind = shot;
+    srv.swing = { shot, kind: 'serve', t: 0, tc: 0.42, dur: 0.75, c, cIdx: -1, hit: false, jumpH: 0, lungeAmt: 0, fh: shot !== 'serve_short' && shot !== 'serve_wide', serve: true };
   };
 
   Match.prototype.executeServe = function (srv) {
@@ -290,7 +291,7 @@
       x: p.x, y: p.y, face: p.face, vx: p.vx, vy: p.vy, gait: p.gait, jumpZ: p.jumpZ, lunge: p.lunge,
       holding: p.holding, side: p.side, kit: p.look, energy: p.energy, idx: p.idx,
       split: p.splitT !== undefined ? BL.clamp((t - p.splitT) / 0.32, 0, 1) : 1,
-      receiving: !!(m && m.phase === 'serve' && m.score.server !== p.idx), serveKind: p.serveKind,
+      receiving: !!(m && m.phase === 'serve' && m.score.server !== p.idx), serveKind: p.serveKind, stDef: p.stDef || 0, stNet: p.stNet || 0,
       sw: sw ? { kind: sw.kind, t: sw.t, tc: sw.tc, dur: sw.dur, c: sw.c, fh: sw.fh, shot: sw.shot, hit: sw.hit } : null,
     };
   }
@@ -369,6 +370,16 @@
     while (df < -Math.PI) df += 2 * Math.PI;
     p.face += df * Math.min(1, DT * 9);
 
+    // thế đứng theo tình huống: vừa đánh cầu cao cho đối thủ -> thế thủ chờ đập; đứng gần lưới -> giơ vợt cao
+    let tDef = 0, tNet = 0;
+    if (this.phase === 'rally' && sh.flight) {
+      const kd = BL.SHOTS[sh.shot] ? BL.SHOTS[sh.shot].kind : '';
+      if (sh.hitter === p.idx && (kd === 'lift' || kd === 'clear' || sh.shot === 'serve_high' || sh.shot === 'serve_flick')) tDef = 1;
+      else if (sh.hitter !== p.idx && kd === 'smash') tDef = 1;
+      if (!tDef && Math.abs(p.y) < 2.4) tNet = 1;
+    }
+    p.stDef = (p.stDef || 0) + (tDef - (p.stDef || 0)) * Math.min(1, DT * 6);
+    p.stNet = (p.stNet || 0) + (tNet - (p.stNet || 0)) * Math.min(1, DT * 5);
     // vung vợt
     if (p.swing) this.stepSwing(p);
     else { p.jumpZ = Math.max(0, p.jumpZ - DT * 3); p.lunge = Math.max(0, p.lunge - DT * 2.5); }
@@ -506,6 +517,7 @@
 
   // ---- điều khiển từ UI ----
   Match.prototype.press = function (pIdx, shot) {
+    if (!BL.SHOTS[shot]) return;
     const p = this.players[pIdx];
     p.intent = { shot, aimX: BL.joyAim(p.input.aimX), t: this.t };
     // đang vung: cho đổi cú đánh trước lúc chạm nếu cùng tư thế
@@ -533,7 +545,7 @@
   Match.prototype.buttons = function (pIdx) {
     const p = this.players[pIdx];
     if (this.phase === 'serve' && this.score.server === pIdx) return BL.ZONES.serve.shots;
-    if (this.killChance(pIdx)) return ['kill', 'crossnet', 'lift'];
+    if (this.killChance(pIdx)) return BL.ZONES.kill.shots;
     return BL.ZONES[BL.zoneOf(p.y)].shots;
   };
   Match.prototype.zone = function (pIdx) {

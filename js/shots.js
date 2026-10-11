@@ -9,7 +9,8 @@
     crossnet: { name: 'Kéo cầu chéo', icon: '↗', kind: 'net', sig: [1.5, 2.6, 0.022], cost: 2 },
     lift: { name: 'Hất cầu', icon: '⤴', kind: 'lift', sig: [1.5, 1.8, 0.03], cost: 3 },
     drive: { name: 'Tạt ngang', icon: '➟', kind: 'drive', sig: [1.0, 1.6, 0.03], cost: 3 },
-    block: { name: 'Đỡ cầu bật lên', icon: '🛡', kind: 'lift', sig: [1.8, 2.2, 0.035], cost: 2 },
+    block: { name: 'Đỡ bật cao', icon: '🛡', kind: 'lift', sig: [1.8, 2.2, 0.035], cost: 2 },
+    blocknet: { name: 'Chặn lưới', icon: '✋', kind: 'net', sig: [1.1, 2.0, 0.02], cost: 2 },
     jsmash: { name: 'Nhảy đập', icon: '💥', kind: 'smash', sig: [0.8, 1.4, 0.02], cost: 9 },
     drop: { name: 'Ve cầu', icon: '🍃', kind: 'drop', sig: [1.0, 1.6, 0.03], cost: 3 },
     clear: { name: 'Phông cầu', icon: '🌈', kind: 'clear', sig: [1.2, 1.6, 0.025], cost: 4 },
@@ -20,16 +21,17 @@
     serve_short: { name: 'Giao ngắn', icon: '🪶', kind: 'serve', sig: [1.0, 1.2, 0.02], cost: 1 },
     serve_high: { name: 'Giao cao sâu', icon: '🌈', kind: 'serve', sig: [1.1, 1.5, 0.025], cost: 1 },
     serve_flick: { name: 'Giao bổng nhanh', icon: '➚', kind: 'serve', sig: [1.0, 1.5, 0.025], cost: 1 },
+    serve_wide: { name: 'Giao ngắn góc', icon: '↘', kind: 'serve', sig: [1.0, 1.3, 0.02], cost: 1 },
     mishit: { name: 'Đánh hỏng', icon: '✖', kind: 'bad', sig: [0, 0, 0], cost: 1 },
   };
 
   // 3 nút theo vị trí đứng
   BL.ZONES = {
-    front: { name: 'Trên lưới', shots: ['net', 'crossnet', 'lift'] },
-    mid: { name: 'Giữa sân', shots: ['drive', 'block', 'jsmash'] },
-    back: { name: 'Cuối sân', shots: ['drop', 'clear', 'jsmash'] },
-    serve: { name: 'Giao cầu', shots: ['serve_short', 'serve_high', 'serve_flick'] },
-    kill: { name: 'Vồ lưới!', shots: ['kill', 'crossnet', 'lift'] },
+    front: { name: 'Trên lưới', shots: ['net', 'crossnet', 'push', 'lift'] },
+    mid: { name: 'Giữa sân', shots: ['drive', 'blocknet', 'block', 'jsmash'] },
+    back: { name: 'Cuối sân', shots: ['drop', 'clear', 'smash', 'jsmash'] },
+    serve: { name: 'Giao cầu', shots: ['serve_short', 'serve_wide', 'serve_high', 'serve_flick'] },
+    kill: { name: 'Vồ lưới!', shots: ['kill', 'crossnet', 'push', 'lift'] },
   };
   BL.zoneOf = (y) => {
     const a = Math.abs(y);
@@ -41,7 +43,7 @@
     const h = BL.netHeight(0);
     if (shot === 'jsmash' || shot === 'smash') {
       if (ay < 2.0 && z > h + 0.15) return 'kill';
-      if (z >= 2.0) return z > p.d.reachUp - 0.05 ? 'jsmash' : 'smash';
+      if (z >= 2.0) return shot === 'smash' ? 'smash' : z > p.d.reachUp - 0.05 ? 'jsmash' : 'smash';
       if (z >= 1.0) return 'drive';
       return 'block';
     }
@@ -163,22 +165,22 @@
         }
         break;
       }
-      case 'serve_short': {
+      case 'serve_short': case 'serve_wide': {
         const sx = BL.courtXSign(o, ctx.rl);
-        // giao ngắn: hay vào góc chữ T, đôi khi ra góc biên
-        tx = sx * (BL.rand() < 0.75 ? 0.12 + BL.rand() * 0.45 : 1.2 + BL.rand() * 0.9);
+        // giao ngắn: vào góc chữ T; giao ngắn góc: ra góc biên dọc
+        tx = sx * (shot === 'serve_wide' ? 1.55 + BL.rand() * 0.6 : BL.rand() < 0.85 ? 0.12 + BL.rand() * 0.45 : 1.2 + BL.rand() * 0.9);
         depth = C.SHORT_SVC + 0.12 + (d.acc - 0.6) * 0.22 + BL.rand() * 0.2;
         g = geo(tx, depth);
         plan = solveNetLike(z0, g.dist, g.rNet, g.hNet, d.netClear + 0.04, 20, false);
         break;
       }
-      case 'net': case 'crossnet': case 'defend': {
+      case 'net': case 'crossnet': case 'defend': case 'blocknet': {
         if (shot === 'crossnet') tx = (Math.abs(c[0]) > 0.3 ? -Math.sign(c[0]) : -Math.sign(opp.x || 1)) * W * 0.95;
         else if (shot === 'net') tx = BL.clamp(c[0] * 0.9 + aimX * 0.3, -W, W);
-        depth = shot === 'defend' ? 0.8 + BL.rand() * 1.6 : 0.3 + (d.netClear - 0.035) * 3 + BL.rand() * 0.5;
+        depth = shot === 'defend' ? 0.8 + BL.rand() * 1.6 : shot === 'blocknet' ? 0.8 + BL.rand() * 1.0 : 0.3 + (d.netClear - 0.035) * 3 + BL.rand() * 0.5;
         g = geo(tx, depth);
         const over = z0 > g.hNet + 0.05;
-        plan = solveNetLike(z0, g.dist, g.rNet, g.hNet, shot === 'defend' ? 0.24 : d.netClear + 0.02, 30, over);
+        plan = solveNetLike(z0, g.dist, g.rNet, g.hNet, shot === 'defend' ? 0.24 : shot === 'blocknet' ? d.netClear + 0.13 : d.netClear + 0.02, 30, over);
         break;
       }
       case 'drop': {
@@ -197,7 +199,7 @@
       }
       case 'drive': case 'push': {
         // tạt: góc thấp nhất (nhanh nhất) mà vẫn qua lưới an toàn và rơi trong sân
-        depth = 3.2 + BL.rand() * 3.0;
+        depth = shot === 'push' ? 2.6 + BL.rand() * 1.8 : 3.2 + BL.rand() * 3.0;
         g = geo(tx, depth);
         const vD = d.drive * (shot === 'push' ? 0.6 : 0.85 + BL.rand() * 0.15);
         for (let deg = -10; deg <= 30; deg += 2) {

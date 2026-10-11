@@ -15,6 +15,7 @@
 </head>
 <body>
 <canvas id="cv"></canvas>
+<div id="vig"></div>
 
 <div id="hud" class="hidden">
   <div id="sb">
@@ -31,12 +32,15 @@
     <button class="shot" data-i="0"><i></i><b></b></button>
     <button class="shot" data-i="1"><i></i><b></b></button>
     <button class="shot" data-i="2"><i></i><b></b></button>
+    <button class="shot" data-i="3"><i></i><b></b></button>
   </div>
 </div>
 
 <div id="screens"></div>
 
 <script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/SkeletonUtils.js"></script>
 <script src="js/core.js"></script>
 <script src="js/physics.js"></script>
 <script src="js/stats.js"></script>
@@ -47,6 +51,7 @@
 <script src="js/anim.js"></script>
 <script src="js/render.js"></script>
 <script src="js/human3d.js"></script>
+<script src="js/humanrig.js"></script>
 <script src="js/render3d.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/ui.js"></script>

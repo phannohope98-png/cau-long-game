@@ -311,7 +311,7 @@ sect('Người chơi: bấm sai lúc / đổi cú / bấm loạn / không bấm'
   const m4 = new BL.Match({ format: 'quick', timeScale: 1, p0: { name: 'H', stats: lv(40), ctrl: 'human' }, p1: { name: 'B', stats: lv(40), ctrl: 'bot' } });
   let bad = 0;
   for (let s = 0; s < 240 * 600 && m4.phase !== 'over'; s++) {
-    if (s % 7 === 0) { const b = m4.buttons(0); m4.press(0, b[s % 3]); }
+    if (s % 7 === 0) { const b = m4.buttons(0); m4.press(0, b[s % 4]); }
     m4.players[0].input.mx = Math.sin(s / 50); m4.players[0].input.my = Math.cos(s / 70);
     m4.step();
     if (m4.phase === 'interval' || m4.phase === 'gamebreak') m4.skipBreak = true;

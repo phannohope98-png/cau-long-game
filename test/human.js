@@ -24,7 +24,7 @@ function play(style, myLv, oppIdx, seed, opts = {}) {
     me.input.mx = mx; me.input.my = my; me.input.aimX = mx;
     // ---- "ngón tay phải": bấm nút ----
     if (m.phase === 'serve' && m.score.server === 0 && m.phaseT > 0.6 && !me.swing) {
-      const b = m.buttons(0); m.press(0, b[Math.floor(BL.rand() * 3)]); R.presses++;
+      const b = m.buttons(0); m.press(0, b[Math.floor(BL.rand() * 4)]); R.presses++;
     }
     if (m.phase === 'rally' && sh.hitter === 1 && style !== 'idle') {
       const tIn = m.t - sh.tHit;
@@ -32,8 +32,8 @@ function play(style, myLv, oppIdx, seed, opts = {}) {
       if (pressedFor !== sh.tHit && tIn > wantT) {
         pressedFor = sh.tHit;
         const b = m.buttons(0);
-        let i = Math.floor(BL.rand() * 3);
-        if (style === 'smart') { const z = m.zone(0); i = z === 'back' ? (rnd < 0.4 ? 1 : rnd < 0.7 ? 0 : 2) : z === 'mid' ? (rnd < 0.5 ? 1 : rnd < 0.75 ? 0 : 2) : (rnd < 0.5 ? 0 : rnd < 0.7 ? 1 : 2); }
+        let i = Math.floor(BL.rand() * 4);
+        if (style === 'smart') { const z = m.zone(0); i = z === 'back' ? (rnd < 0.35 ? 1 : rnd < 0.6 ? 0 : rnd < 0.8 ? 3 : 2) : z === 'mid' ? (rnd < 0.35 ? 2 : rnd < 0.55 ? 0 : rnd < 0.75 ? 1 : 3) : z === 'kill' ? 0 : (rnd < 0.45 ? 0 : rnd < 0.6 ? 1 : rnd < 0.7 ? 2 : 3); }
         m.press(0, b[i]); R.presses++;
       }
       if (style === 'spam' && Math.floor(m.t * 20) % 3 === 0) { const b = m.buttons(0); m.press(0, b[Math.floor(BL.rand() * 3)]); R.presses++; }
